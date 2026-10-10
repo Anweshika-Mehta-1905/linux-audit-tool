@@ -3,154 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinuxAudit — Security Scanner</title>
+<title>LinuxAudit — Security Report Viewer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#08090c;
-  --card:#0f1117;
-  --border:#1e2230;
-  --accent:#4f7fff;
-  --green:#22c55e;
-  --red:#ef4444;
-  --yellow:#f59e0b;
-  --text:#f1f5f9;
-  --muted:#64748b;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Inter',sans-serif;
+  --bg:#08090c;--card:#0f1117;--card2:#141820;--border:#1e2230;--border2:#252d40;
+  --accent:#4f7fff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#a78bfa;
+  --text:#f1f5f9;--muted:#64748b;--muted2:#94a3b8;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
 }
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(8,9,12,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.logo{display:flex;align-items:center;gap:10px;font-size:.95rem;font-weight:700}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(8,9,12,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px;font-size:.95rem;font-weight:700;color:#fff}
 .logo-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
-.nav-links{display:flex;align-items:center;gap:6px}
-.nav-links a{color:var(--muted);font-size:.82rem;font-weight:500;padding:6px 14px;border-radius:8px;transition:.15s}
-.nav-links a:hover{color:var(--text);background:#ffffff08}
-.nav-dl{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;font-size:.82rem;font-weight:600;padding:7px 16px;border-radius:8px;cursor:pointer;border:none;font-family:var(--sans);transition:.15s}
-.nav-dl:hover{opacity:.88}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);transition:.15s}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2)}
+.btn-ghost:hover{background:var(--card);color:var(--text)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{opacity:.88}
 
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(79,127,255,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none}
-.badge{display:inline-flex;align-items:center;gap:8px;background:#ffffff08;border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:.75rem;color:var(--muted);margin-bottom:32px}
+/* LANDING */
+#landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
+#landing::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(79,127,255,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:8px;background:#ffffff08;border:1px solid var(--border);border-radius:100px;padding:5px 16px;font-size:.75rem;color:var(--muted2);margin-bottom:28px}
 .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-h1{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:700;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px;color:#fff}
-h1 em{font-style:normal;color:var(--accent)}
-.hero-sub{font-size:1rem;color:var(--muted);max-width:460px;margin:0 auto 40px;line-height:1.7}
-.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;font-size:.875rem;font-weight:600;cursor:pointer;transition:.15s;border:none;font-family:var(--sans)}
-.btn-solid{background:var(--accent);color:#fff}
-.btn-solid:hover{opacity:.88;transform:translateY(-1px)}
-.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-outline:hover{background:#ffffff06;transform:translateY(-1px)}
-.btn-dl{background:var(--green);color:#fff}
-.btn-dl:hover{opacity:.88;transform:translateY(-1px)}
-.stats{display:flex;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.stat{padding:20px 36px;text-align:center;border-right:1px solid var(--border)}
-.stat:last-child{border-right:none}
-.stat-n{font-size:1.5rem;font-weight:700;color:#fff}
-.stat-n.a{color:var(--accent)}.stat-n.g{color:var(--green)}.stat-n.p{color:#a78bfa}
-.stat-l{font-size:.68rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+.land-title{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px;color:#fff}
+.land-title em{font-style:normal;color:var(--accent)}
+.land-sub{font-size:1rem;color:var(--muted2);max-width:500px;margin:0 auto 40px;line-height:1.7}
 
-/* DOWNLOAD SECTION */
-.dl-section{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:60px 40px}
-.dl-inner{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.dl-left{}
-.dl-title{font-size:1.6rem;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:10px}
-.dl-sub{font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:28px}
-.dl-btn{display:inline-flex;align-items:center;gap:10px;background:var(--green);color:#fff;font-size:.95rem;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;border:none;font-family:var(--sans);transition:.15s;width:100%;justify-content:center;margin-bottom:12px}
-.dl-btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 8px 24px rgba(34,197,94,.25)}
-.dl-meta{font-size:.75rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;gap:16px}
-.dl-meta span{display:flex;align-items:center;gap:5px}
-.dl-right{}
-.steps-mini{display:flex;flex-direction:column;gap:0}
-.sm{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border)}
-.sm:last-child{border-bottom:none}
-.sm-n{width:28px;height:28px;border-radius:7px;background:rgba(79,127,255,.1);border:1px solid rgba(79,127,255,.2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--accent);flex-shrink:0}
-.sm-t{font-size:.85rem;font-weight:600;color:#fff;margin-bottom:3px}
-.sm-d{font-size:.76rem;color:var(--muted);line-height:1.5}
-.cmd-line{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-family:var(--mono);font-size:.72rem;color:var(--green);margin-top:7px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.cpbtn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:.6rem;padding:2px 7px;border-radius:4px;cursor:pointer;transition:.15s;flex-shrink:0}
-.cpbtn:hover{border-color:var(--accent);color:var(--accent)}
+/* UPLOAD ZONE */
+.upload-zone{width:100%;max-width:560px;background:var(--card);border:2px dashed var(--border2);border-radius:20px;padding:48px 32px;cursor:pointer;transition:.2s;position:relative;margin-bottom:32px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,127,255,.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.up-icon{font-size:2.5rem;margin-bottom:12px}
+.up-title{font-size:1rem;font-weight:600;color:#fff;margin-bottom:6px}
+.up-sub{font-size:.82rem;color:var(--muted);line-height:1.6}
+.up-tag{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-family:var(--mono);font-size:.72rem;color:var(--accent);margin-top:12px}
+.how-steps{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:560px;width:100%}
+.hs{flex:1;padding:16px;text-align:center;border-right:1px solid var(--border)}
+.hs:last-child{border-right:none}
+.hs-n{font-size:.65rem;font-weight:700;color:var(--accent);font-family:var(--mono);letter-spacing:1px;margin-bottom:4px}
+.hs-t{font-size:.78rem;font-weight:600;color:#fff;margin-bottom:3px}
+.hs-d{font-size:.7rem;color:var(--muted)}
 
-/* SECTIONS */
-.sec{padding:80px 40px;max-width:1000px;margin:0 auto}
-.sec-label{font-size:.7rem;font-weight:600;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
-.sec-title{font-size:clamp(1.5rem,2.5vw,2rem);font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:10px}
-.sec-sub{font-size:.9rem;color:var(--muted);max-width:480px;line-height:1.7}
-hr.div{border:none;border-top:1px solid var(--border);margin:0 40px}
+/* REPORT PAGE */
+#report-page{display:none;padding:80px 0 60px}
+.report-wrap{max-width:1100px;margin:0 auto;padding:0 32px}
 
-/* MODULES */
-.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
-.mod{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:.2s}
-.mod:hover{border-color:#2a3450;transform:translateY(-2px)}
-.mod-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.mod-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.mod-num{font-size:.65rem;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:1px}
-.mod-name{font-size:.9rem;font-weight:600;color:#fff;margin-top:1px}
-.mod-list{list-style:none;display:flex;flex-direction:column;gap:7px}
-.mod-list li{font-size:.77rem;color:var(--muted);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
-.mod-list li::before{content:'›';color:var(--accent);flex-shrink:0;margin-top:1px}
+/* REPORT HEADER */
+.rep-header{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:24px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.rep-host{font-size:1.6rem;font-weight:700;color:#fff;letter-spacing:-.5px}
+.rep-meta{display:flex;gap:20px;margin-top:8px;flex-wrap:wrap}
+.rep-meta-item{font-size:.78rem;color:var(--muted2);display:flex;align-items:center;gap:6px}
+.rep-verdict{text-align:right}
+.verdict-badge{display:inline-block;padding:8px 20px;border-radius:10px;font-size:.85rem;font-weight:700;letter-spacing:1px}
+.verdict-attn{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.verdict-clean{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+.rep-time{font-size:.75rem;color:var(--muted);margin-top:6px}
 
-/* DEMO */
-.demo-wrap{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 40px}
-.demo-inner{max-width:1000px;margin:0 auto}
-.demo-body{display:grid;grid-template-columns:220px 1fr;gap:20px;margin-top:40px}
-.scene-list{display:flex;flex-direction:column;gap:6px}
-.scene-lbl{font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:0 4px;margin-bottom:6px}
-.sb{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;font-family:var(--sans);width:100%;text-align:left;transition:.15s}
-.sb:hover{background:#ffffff06;border-color:var(--border)}
-.sb.on{background:rgba(79,127,255,.08);border-color:rgba(79,127,255,.3)}
-.sb-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.sb-title{font-size:.8rem;font-weight:600;color:var(--text);display:block}
-.sb-sub{font-size:.7rem;color:var(--muted);display:block;margin-top:1px}
-.sb.on .sb-title{color:#fff}
-.legend{margin-top:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:10px}
-.leg-title{font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.leg-item{display:flex;align-items:center;gap:8px;font-size:.73rem;color:var(--muted);margin-bottom:6px}
-.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.term{background:#060809;border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.term-bar{background:#0c0e14;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
-.tdot{width:10px;height:10px;border-radius:50%}
-.tdot.r{background:#ff5f57}.tdot.y{background:#febc2e}.tdot.g{background:#28c840}
-.term-ttl{font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-left:6px}
-.term-body{padding:18px;min-height:380px;max-height:420px;overflow-y:auto;font-family:var(--mono);font-size:.76rem;line-height:1.9}
-#tout{white-space:pre-wrap;word-break:break-all}
-.cur{display:inline-block;width:7px;height:14px;background:var(--green);border-radius:1px;animation:blink 1s step-end infinite;vertical-align:middle}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-.term-foot{background:#0c0e14;border-top:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;justify-content:space-between}
-.prog{flex:1;max-width:160px;background:#1a1f2e;height:2px;border-radius:1px;overflow:hidden}
-.prog-f{height:100%;background:var(--accent);width:0%;transition:width .08s linear}
-.term-st{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
-.tg{color:var(--green)}.tr{color:var(--red)}.ty{color:var(--yellow)}.tb{color:var(--accent)}.td{color:#3d4a63}.tw{color:#fff}.trb{color:var(--red);font-weight:700}
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;text-align:center}
+.stat-card.crit{border-top:3px solid var(--red)}
+.stat-card.review{border-top:3px solid var(--yellow)}
+.stat-card.pass{border-top:3px solid var(--green)}
+.stat-card.total{border-top:3px solid var(--accent)}
+.sc-num{font-size:2rem;font-weight:800;line-height:1}
+.sc-num.r{color:var(--red)}.sc-num.y{color:var(--yellow)}.sc-num.g{color:var(--green)}.sc-num.a{color:var(--accent)}
+.sc-label{font-size:.72rem;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:1px}
 
-/* FOOTER */
-footer{border-top:1px solid var(--border);padding:36px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.foot-logo{font-size:.9rem;font-weight:700;color:#fff}
-.foot-note{font-size:.75rem;color:var(--muted);margin-top:4px}
-.foot-tags{display:flex;gap:6px;flex-wrap:wrap}
-.ftag2{background:#ffffff06;border:1px solid var(--border);color:var(--muted);font-size:.65rem;padding:3px 10px;border-radius:100px;font-family:var(--mono)}
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px}
+.chart-title{font-size:.82rem;font-weight:600;color:#fff;margin-bottom:16px}
+.chart-wrap{position:relative;height:180px}
+
+/* FINDINGS */
+.findings-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.fs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.fs-title{font-size:1rem;font-weight:700;color:#fff}
+.fs-filters{display:flex;gap:6px}
+.filter-btn{padding:5px 14px;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-family:var(--sans);transition:.15s}
+.filter-btn:hover{background:var(--card2)}
+.filter-btn.on{background:rgba(79,127,255,.1);border-color:rgba(79,127,255,.4);color:var(--accent)}
+.filter-btn.on-r{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--red)}
+.filter-btn.on-y{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4);color:var(--yellow)}
+.filter-btn.on-g{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);color:var(--green)}
+.finding-item{display:flex;gap:16px;padding:16px;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;transition:.15s;background:var(--card2)}
+.finding-item:hover{border-color:var(--border2)}
+.finding-item.crit{border-left:3px solid var(--red)}
+.finding-item.review{border-left:3px solid var(--yellow)}
+.finding-item.ok{border-left:3px solid var(--green)}
+.finding-item.info{border-left:3px solid var(--accent)}
+.fi-badge{flex-shrink:0;width:80px;text-align:center}
+.fib{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:5px;font-family:var(--mono)}
+.fib-c{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.fib-r{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.25)}
+.fib-o{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.fib-i{background:rgba(79,127,255,.15);color:var(--accent);border:1px solid rgba(79,127,255,.25)}
+.fi-body{flex:1;min-width:0}
+.fi-text{font-family:var(--mono);font-size:.76rem;color:var(--text);line-height:1.6;word-break:break-all}
+.fi-module{font-size:.68rem;color:var(--muted);margin-top:4px}
+
+/* RECOMMENDATIONS */
+.recs-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.rec-item{display:flex;gap:16px;padding:16px;border-radius:12px;background:var(--card2);border:1px solid var(--border);margin-bottom:10px}
+.rec-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.rec-title{font-size:.85rem;font-weight:600;color:#fff;margin-bottom:4px}
+.rec-desc{font-size:.78rem;color:var(--muted2);line-height:1.6}
+.rec-cmd{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:.72rem;color:var(--green);margin-top:8px}
+
+/* MODULES STATUS */
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.mod-status{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px}
+.mod-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mod-info{}
+.mod-name-s{font-size:.82rem;font-weight:600;color:#fff}
+.mod-count{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+/* ACTIONS */
+.actions-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.act-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);transition:.15s}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:.85rem}
 
 @media(max-width:768px){
-  nav{padding:0 20px}
-  .nav-links a{display:none}
-  .hero{padding:100px 20px 60px}
-  .stats{flex-wrap:wrap}
-  .stat{flex:1;min-width:120px;border-right:none;border-bottom:1px solid var(--border)}
-  .sec{padding:60px 20px}
-  hr.div{margin:0 20px}
-  .mod-grid{grid-template-columns:1fr}
-  .demo-wrap{padding:60px 20px}
-  .demo-body{grid-template-columns:1fr}
-  .dl-section{padding:60px 20px}
-  .dl-inner{grid-template-columns:1fr;gap:40px}
-  footer{padding:30px 20px;flex-direction:column;text-align:center}
+  nav{padding:0 16px}
+  .report-wrap{padding:0 16px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .charts-row{grid-template-columns:1fr}
+  .modules-grid{grid-template-columns:1fr 1fr}
+  .rep-header{grid-template-columns:1fr}
+  .rep-verdict{text-align:left}
+  .how-steps{flex-direction:column}
+  .hs{border-right:none;border-bottom:1px solid var(--border)}
+  .hs:last-child{border-bottom:none}
 }
 </style>
 </head>
@@ -161,642 +158,578 @@ footer{border-top:1px solid var(--border);padding:36px 40px;display:flex;align-i
     <div class="logo-icon">🛡️</div>
     Linux<span style="color:var(--accent)">Audit</span>
   </div>
-  <div class="nav-links">
-    <a href="#modules">Modules</a>
-    <a href="#demo">Demo</a>
-    <a href="#download">How to use</a>
-    <button class="nav-dl" onclick="downloadScript()">↓ Download Script</button>
+  <div class="nav-right">
+    <button class="nav-btn btn-ghost" onclick="showLanding()">← New Report</button>
+    <button class="nav-btn btn-green" onclick="downloadScript()">↓ Get Script</button>
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="badge"><span class="badge-dot"></span>Read-only · Zero dependencies · Pure Bash</div>
-  <h1>Scan your Linux system<br>for <em>security risks</em></h1>
-  <p class="hero-sub">One Bash script. No installs. Runs on any Linux system and shows exactly what's vulnerable — in under 2 minutes.</p>
-  <div class="hero-btns">
-    <button class="btn btn-dl" onclick="downloadScript()">↓&nbsp; Download Script — Free</button>
-    <a href="#demo" class="btn btn-outline">▶&nbsp; See it run first</a>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-n a">6</div><div class="stat-l">Modules</div></div>
-    <div class="stat"><div class="stat-n g">37+</div><div class="stat-l">Checks</div></div>
-    <div class="stat"><div class="stat-n p">50+</div><div class="stat-l">GTFOBins</div></div>
-    <div class="stat"><div class="stat-n">0</div><div class="stat-l">Dependencies</div></div>
-  </div>
-</section>
+<!-- LANDING -->
+<div id="landing">
+  <div class="badge"><span class="badge-dot"></span>Upload your audit report · See instant analysis</div>
+  <h1 class="land-title">Turn your audit output<br>into a <em>visual report</em></h1>
+  <p class="land-sub">Run the Linux Audit script on your machine, save the output, upload it here — get a full professional security report with charts and recommendations.</p>
 
-<hr class="div">
+  <div class="upload-zone" id="dropzone">
+    <input type="file" id="fileInput" accept=".txt,.log,text/plain" onchange="handleFile(this.files[0])">
+    <div class="up-icon">📄</div>
+    <div class="up-title">Drop your report file here</div>
+    <div class="up-sub">or click to browse your files</div>
+    <div class="up-tag">audit_report.txt</div>
+  </div>
 
-<!-- DOWNLOAD + HOW TO USE -->
-<div class="dl-section" id="download">
-  <div class="dl-inner">
-    <div class="dl-left">
-      <div class="sec-label">Get the tool</div>
-      <div class="dl-title">Download &amp; run in 3 steps</div>
-      <p class="dl-sub">Click download, copy the script into your Linux terminal, and run. No package manager. No internet needed during the scan.</p>
-      <button class="dl-btn" onclick="downloadScript()">
-        ↓&nbsp; Download linux_audit.sh
-      </button>
-      <div class="dl-meta">
-        <span>✓ Free forever</span>
-        <span>✓ Single file</span>
-        <span>✓ No install</span>
-        <span>✓ Read-only</span>
-      </div>
+  <div class="how-steps">
+    <div class="hs">
+      <div class="hs-n">STEP 01</div>
+      <div class="hs-t">Run the script</div>
+      <div class="hs-d">On your Linux machine</div>
     </div>
-    <div class="dl-right">
-      <div class="steps-mini">
-        <div class="sm">
-          <div class="sm-n">1</div>
-          <div>
-            <div class="sm-t">Download the script above</div>
-            <div class="sm-d">Click the green button. A file called <code style="color:var(--green);font-family:var(--mono)">linux_audit.sh</code> will download to your computer.</div>
-          </div>
-        </div>
-        <div class="sm">
-          <div class="sm-n">2</div>
-          <div>
-            <div class="sm-t">Copy it to your Linux terminal</div>
-            <div class="sm-d">Open a terminal (Ctrl+Alt+T in Ubuntu). Make the script executable.</div>
-            <div class="cmd-line"><code>chmod +x linux_audit.sh</code><button class="cpbtn" onclick="cp(this,'chmod +x linux_audit.sh')">copy</button></div>
-          </div>
-        </div>
-        <div class="sm">
-          <div class="sm-n">3</div>
-          <div>
-            <div class="sm-t">Run the audit</div>
-            <div class="sm-d">Run as root for full results. Scroll with arrow keys, press Q to quit.</div>
-            <div class="cmd-line"><code>sudo ./linux_audit.sh 2>&1 | less -R</code><button class="cpbtn" onclick="cp(this,'sudo ./linux_audit.sh 2>&1 | less -R')">copy</button></div>
-          </div>
-        </div>
-        <div class="sm">
-          <div class="sm-n">4</div>
-          <div>
-            <div class="sm-t">Save a report</div>
-            <div class="sm-d">Export results as a text file to keep, share, or add to your portfolio.</div>
-            <div class="cmd-line"><code>./linux_audit.sh --no-color > report.txt</code><button class="cpbtn" onclick="cp(this,'./linux_audit.sh --no-color > report.txt')">copy</button></div>
-          </div>
-        </div>
-      </div>
+    <div class="hs">
+      <div class="hs-n">STEP 02</div>
+      <div class="hs-t">Save the output</div>
+      <div class="hs-d">./linux_audit.sh --no-color > report.txt</div>
     </div>
+    <div class="hs">
+      <div class="hs-n">STEP 03</div>
+      <div class="hs-t">Upload here</div>
+      <div class="hs-d">See your full visual report</div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px">
+    <button class="nav-btn btn-ghost" onclick="loadDemo()" style="margin-right:8px">▶ Load demo report</button>
+    <button class="nav-btn btn-green" onclick="downloadScript()">↓ Download Script First</button>
   </div>
 </div>
 
-<hr class="div">
+<!-- REPORT PAGE -->
+<div id="report-page">
+  <div class="report-wrap">
 
-<!-- MODULES -->
-<section class="sec" id="modules">
-  <div class="sec-label">What it checks</div>
-  <div class="sec-title">6 audit modules</div>
-  <p class="sec-sub">Covers every major Linux attack surface — from file permissions to running processes.</p>
-  <div class="mod-grid">
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(79,127,255,.12)">🖥️</div><div><div class="mod-num">01</div><div class="mod-name">System Profile</div></div></div>
-      <ul class="mod-list">
-        <li>OS, kernel, hostname, architecture</li>
-        <li>Current user, UID, groups</li>
-        <li>$PATH safety — dot/relative entries</li>
-        <li>Dangerous groups: docker, lxd, disk</li>
-      </ul>
-    </div>
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(239,68,68,.1)">🔑</div><div><div class="mod-num">02</div><div class="mod-name">Sudo Access</div></div></div>
-      <ul class="mod-list">
-        <li>Passwordless sudo detection</li>
-        <li>Broad NOPASSWD permissions</li>
-        <li>/etc/sudoers read/write access</li>
-        <li>/etc/sudoers.d/* enumeration</li>
-      </ul>
-    </div>
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(245,158,11,.1)">⚡</div><div><div class="mod-num">03</div><div class="mod-name">SUID / SGID</div></div></div>
-      <ul class="mod-list">
-        <li>Full filesystem SUID scan</li>
-        <li>Full filesystem SGID scan</li>
-        <li>GTFOBins cross-reference (50+)</li>
-        <li>Privilege escalation detection</li>
-      </ul>
-    </div>
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(168,85,247,.1)">🔒</div><div><div class="mod-num">04</div><div class="mod-name">File Permissions</div></div></div>
-      <ul class="mod-list">
-        <li>/etc/shadow readable check</li>
-        <li>/etc/passwd, /etc/group write check</li>
-        <li>Crontab and systemd write access</li>
-        <li>World-writable directories</li>
-      </ul>
-    </div>
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(20,184,166,.1)">⏱️</div><div><div class="mod-num">05</div><div class="mod-name">Cron Jobs</div></div></div>
-      <ul class="mod-list">
-        <li>/etc/crontab and /etc/cron.d/*</li>
-        <li>User crontab enumeration</li>
-        <li>Writable cron target detection</li>
-        <li>Missing scripts with writable parent</li>
-      </ul>
-    </div>
-    <div class="mod">
-      <div class="mod-top"><div class="mod-ico" style="background:rgba(34,197,94,.1)">📡</div><div><div class="mod-num">06</div><div class="mod-name">Processes</div></div></div>
-      <ul class="mod-list">
-        <li>All root (UID 0) processes</li>
-        <li>Executables in /tmp or /dev/shm</li>
-        <li>Deleted-on-disk process detection</li>
-        <li>Writable root process binaries</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<hr class="div">
-
-<!-- DEMO -->
-<div class="demo-wrap" id="demo">
-  <div class="demo-inner">
-    <div class="sec-label">Live demo</div>
-    <div class="sec-title">Pick a scenario</div>
-    <p class="sec-sub">Click any scenario to see how findings are detected and displayed.</p>
-    <div class="demo-body">
+    <!-- HEADER -->
+    <div class="rep-header">
       <div>
-        <div class="scene-lbl">Scenarios</div>
-        <div class="scene-list">
-          <button class="sb on" id="sb-clean" onclick="run('clean')">
-            <div class="sb-ico" style="background:rgba(34,197,94,.1)">✅</div>
-            <div><span class="sb-title">Clean system</span><span class="sb-sub">All checks pass</span></div>
-          </button>
-          <button class="sb" id="sb-suid" onclick="run('suid')">
-            <div class="sb-ico" style="background:rgba(239,68,68,.1)">⚡</div>
-            <div><span class="sb-title">SUID GTFOBins</span><span class="sb-sub">vim &amp; find exploitable</span></div>
-          </button>
-          <button class="sb" id="sb-shadow" onclick="run('shadow')">
-            <div class="sb-ico" style="background:rgba(239,68,68,.1)">🔓</div>
-            <div><span class="sb-title">Shadow readable</span><span class="sb-sub">Passwords exposed</span></div>
-          </button>
-          <button class="sb" id="sb-tmp" onclick="run('tmp')">
-            <div class="sb-ico" style="background:rgba(245,158,11,.1)">⚠️</div>
-            <div><span class="sb-title">Process in /tmp</span><span class="sb-sub">Possible malware</span></div>
-          </button>
-          <button class="sb" id="sb-path" onclick="run('path')">
-            <div class="sb-ico" style="background:rgba(239,68,68,.1)">🛤️</div>
-            <div><span class="sb-title">Dangerous $PATH</span><span class="sb-sub">PATH hijacking risk</span></div>
-          </button>
-        </div>
-        <div class="legend">
-          <div class="leg-title">Color guide</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>[CRITICAL] Fix immediately</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>[REVIEW] Investigate</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>[ OK ] Check passed</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>[INFO] Note</div>
+        <div class="rep-host" id="rep-host">ubuntu</div>
+        <div class="rep-meta">
+          <div class="rep-meta-item">🖥️ <span id="rep-os">—</span></div>
+          <div class="rep-meta-item">⚙️ <span id="rep-kernel">—</span></div>
+          <div class="rep-meta-item">👤 <span id="rep-user">—</span></div>
+          <div class="rep-meta-item">🏗️ <span id="rep-arch">—</span></div>
         </div>
       </div>
-      <div class="term">
-        <div class="term-bar">
-          <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
-          <span class="term-ttl">admin@ubuntu: ~/linux_audit.sh</span>
-        </div>
-        <div class="term-body" id="tbody">
-          <div id="tout"></div><span class="cur"></span>
-        </div>
-        <div class="term-foot">
-          <div class="prog"><div class="prog-f" id="pf"></div></div>
-          <div class="term-st" id="pst">Ready</div>
-        </div>
+      <div class="rep-verdict">
+        <div class="verdict-badge" id="verdict-badge">—</div>
+        <div class="rep-time" id="rep-time">—</div>
       </div>
     </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card total"><div class="sc-num a" id="sc-total">0</div><div class="sc-label">Total Checks</div></div>
+      <div class="stat-card crit"><div class="sc-num r" id="sc-crit">0</div><div class="sc-label">Critical</div></div>
+      <div class="stat-card review"><div class="sc-num y" id="sc-review">0</div><div class="sc-label">Review Items</div></div>
+      <div class="stat-card pass"><div class="sc-num g" id="sc-pass">0</div><div class="sc-label">Passed</div></div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Severity Breakdown</div>
+        <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Findings by Module</div>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Risk Score</div>
+        <div class="chart-wrap"><canvas id="gaugeChart"></canvas></div>
+        <div id="risk-label" style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:-20px"></div>
+      </div>
+    </div>
+
+    <!-- MODULE STATUS -->
+    <div class="modules-grid" id="modules-grid"></div>
+
+    <!-- ACTIONS -->
+    <div class="actions-bar">
+      <button class="act-btn" style="background:var(--accent);color:#fff" onclick="window.print()">🖨️ Print Report</button>
+      <button class="act-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="exportTxt()">📄 Export TXT</button>
+      <button class="act-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--text)" onclick="showLanding()">↑ Upload New</button>
+    </div>
+
+    <!-- FINDINGS -->
+    <div class="findings-section">
+      <div class="fs-header">
+        <div class="fs-title">All Findings</div>
+        <div class="fs-filters">
+          <button class="filter-btn on" onclick="filterFindings('all',this)">All</button>
+          <button class="filter-btn" onclick="filterFindings('crit',this)">🔴 Critical</button>
+          <button class="filter-btn" onclick="filterFindings('review',this)">🟡 Review</button>
+          <button class="filter-btn" onclick="filterFindings('ok',this)">🟢 Passed</button>
+        </div>
+      </div>
+      <div id="findings-list"></div>
+    </div>
+
+    <!-- RECOMMENDATIONS -->
+    <div class="recs-section" id="recs-section">
+      <div class="fs-title" style="margin-bottom:16px">💡 Recommendations</div>
+      <div id="recs-list"></div>
+    </div>
+
   </div>
 </div>
-
-<footer>
-  <div>
-    <div class="foot-logo">Linux<span style="color:var(--accent)">Audit</span></div>
-    <div class="foot-note">Read-only · Zero dependencies · Pure Bash</div>
-  </div>
-  <div class="foot-tags">
-    <div class="ftag2">bash</div>
-    <div class="ftag2">linux</div>
-    <div class="ftag2">security</div>
-    <div class="ftag2">soc</div>
-    <div class="ftag2">open-source</div>
-  </div>
-  <div class="foot-note">Always get authorization before auditing systems you don't own.</div>
-</footer>
 
 <script>
-/* ── SCRIPT CONTENT ── */
-const SCRIPT = `#!/usr/bin/env bash
-#
-# linux_audit.sh - Automated, READ-ONLY Linux security configuration & permission audit
-# Usage:  ./linux_audit.sh [--no-color] [-h|--help]
-#
+/* ── STATE ── */
+let allFindings=[];
+let parsedData={};
 
-LC_ALL=C
-export LC_ALL
+/* ── DRAG & DROP ── */
+const dz=document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
 
-TOTAL=0; CRIT=0; INFO=0; PASS=0; MAX_LIST=40
-
-GTFO_BINS=(
-  bash sh dash zsh ksh csh tcsh
-  find vim vi nano ed cp mv awk gawk mawk sed
-  python perl ruby php lua node tclsh
-  tar zip unzip nmap less more man env pkexec
-  gdb strace tcpdump rsync git ssh ftp wget curl
-  dd tee base64 xargs nice timeout taskset watch
-  docker systemctl
-)
-
-usage() { cat <<'EOF'
-linux_audit.sh - read-only Linux security configuration & permission audit
-Options:
-  --no-color    Disable ANSI colors
-  -h, --help    Show this help
-EOF
+function handleFile(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>parseAndRender(e.target.result,file.name);
+  r.readAsText(file);
 }
 
-NO_COLOR_FLAG=0
-for arg in "$@"; do
-  case "$arg" in
-    --no-color) NO_COLOR_FLAG=1 ;;
-    -h|--help)  usage; exit 0 ;;
-    *)          printf 'Unknown option: %s\\n' "$arg" >&2; usage >&2; exit 2 ;;
-  esac
-done
+/* ── PARSE REPORT ── */
+function parseAndRender(text,filename){
+  const lines=text.split('\n');
+  const data={
+    host:'Unknown',os:'Unknown',kernel:'Unknown',user:'Unknown',arch:'Unknown',
+    started:'Unknown',finished:'Unknown',
+    total:0,crit:0,review:0,pass:0,info:0,
+    verdict:'UNKNOWN',
+    findings:[],
+    modules:{1:[],2:[],3:[],4:[],5:[],6:[]}
+  };
 
-if [ "$NO_COLOR_FLAG" -eq 1 ] || [ -n "\${NO_COLOR:-}" ]; then
-  RED=""; BOLD_RED=""; YELLOW=""; GREEN=""; BLUE=""; BOLD=""; RESET=""
-else
-  RED=$'\\033[0;31m'; BOLD_RED=$'\\033[1;31m'; YELLOW=$'\\033[0;33m'
-  GREEN=$'\\033[0;32m'; BLUE=$'\\033[0;34m'; BOLD=$'\\033[1m'; RESET=$'\\033[0m'
-fi
+  let currentModule=0;
 
-UID_NOW=$(id -u 2>/dev/null); UID_NOW=\${UID_NOW:-65534}
-USER_NOW=$(id -un 2>/dev/null); USER_NOW=\${USER_NOW:-unknown}
+  lines.forEach(line=>{
+    const t=line.trim();
 
-section() { printf '\\n%s%s=== %s ===%s\\n' "$BOLD" "$BLUE" "$1" "$RESET"; }
-kv()      { printf '  %s%-20s%s %s\\n' "$BOLD" "$1" "$RESET" "$2"; }
-plain()   { printf '             %s\\n' "$*"; }
-chk()     { TOTAL=$((TOTAL + 1)); }
-crit()    { CRIT=$((CRIT+1)); printf '  %s[CRITICAL]%s %s%s%s\\n' "$BOLD_RED" "$RESET" "$RED" "$*" "$RESET"; }
-crit_hl() { CRIT=$((CRIT+1)); printf '  %s[CRITICAL] %s%s\\n' "$BOLD_RED" "$*" "$RESET"; }
-warn()    { INFO=$((INFO+1)); printf '  %s[REVIEW]%s   %s%s%s\\n' "$YELLOW" "$RESET" "$YELLOW" "$*" "$RESET"; }
-note()    { INFO=$((INFO+1)); printf '  %s[INFO]%s     %s\\n' "$BLUE" "$RESET" "$*"; }
-ok()      { PASS=$((PASS+1)); printf '  %s[ OK ]%s     %s\\n' "$GREEN" "$RESET" "$*"; }
+    // System info
+    if(/OS release:/i.test(t))      data.os=t.replace(/.*OS release:\s*/i,'').trim()||data.os;
+    if(/Kernel:/i.test(t)&&!/uname/i.test(t)) data.kernel=t.replace(/.*Kernel:\s*/i,'').trim()||data.kernel;
+    if(/Hostname:/i.test(t))        data.host=t.replace(/.*Hostname:\s*/i,'').trim()||data.host;
+    if(/Architecture:/i.test(t))    data.arch=t.replace(/.*Architecture:\s*/i,'').trim()||data.arch;
+    if(/^User:/i.test(t))           data.user=t.replace(/.*User:\s*/i,'').trim()||data.user;
+    if(/Started\s*:/i.test(t))      data.started=t.replace(/.*Started\s*:\s*/i,'').trim();
+    if(/Finished:/i.test(t))        data.finished=t.replace(/.*Finished:\s*/i,'').trim();
 
-stat_brief() { stat -c '%A %U:%G' "$1" 2>/dev/null || printf '?'; }
+    // Module detection
+    if(/===\s*1\./i.test(t)) currentModule=1;
+    else if(/===\s*2\./i.test(t)) currentModule=2;
+    else if(/===\s*3\./i.test(t)) currentModule=3;
+    else if(/===\s*4\./i.test(t)) currentModule=4;
+    else if(/===\s*5\./i.test(t)) currentModule=5;
+    else if(/===\s*6\./i.test(t)) currentModule=6;
 
-can_write() {
-  if [ "$UID_NOW" -eq 0 ]; then [ -n "$(find -H "$1" -maxdepth 0 -perm -0002 2>/dev/null)" ]
-  else [ -w "$1" ]; fi
-}
-can_read() {
-  if [ "$UID_NOW" -eq 0 ]; then [ -n "$(find -H "$1" -maxdepth 0 -perm -0004 2>/dev/null)" ]
-  else [ -r "$1" ]; fi
-}
-find_writable() {
-  local p="$1"; shift
-  if [ "$UID_NOW" -eq 0 ]; then find "$p" "$@" -perm -0002 2>/dev/null
-  else find "$p" "$@" -writable 2>/dev/null; fi
-}
-report_paths() {
-  local level="$1" label="$2" list="$3" n=0 p
-  while IFS= read -r p; do
-    [ -n "$p" ] || continue; n=$((n+1))
-    if [ "$n" -le "$MAX_LIST" ]; then "$level" "$label: $p"
-    elif [ "$level" = "crit" ]; then CRIT=$((CRIT+1)); else INFO=$((INFO+1)); fi
-  done <<< "$list"
-  [ "$n" -gt "$MAX_LIST" ] && plain "... $((n-MAX_LIST)) more entries"
-}
-is_gtfo() {
-  local name="$1" g
-  for g in "\${GTFO_BINS[@]}"; do
-    [[ "$name" == "$g" || "$name" == "$g"[0-9]* ]] && return 0
-  done; return 1
-}
+    // Summary
+    if(/Total checks executed:/i.test(t)){
+      const m=t.match(/(\d+)/); if(m) data.total=parseInt(m[1]);
+    }
+    if(/Critical.*high-risk/i.test(t)){
+      const m=t.match(/(\d+)/); if(m) data.crit=parseInt(m[1]);
+    }
+    if(/Informational.*review/i.test(t)){
+      const m=t.match(/(\d+)/); if(m) data.review=parseInt(m[1]);
+    }
+    if(/Passed checks:/i.test(t)){
+      const m=t.match(/(\d+)/); if(m) data.pass=parseInt(m[1]);
+    }
+    if(/Verdict:/i.test(t)){
+      if(/ATTENTION/i.test(t)) data.verdict='ATTENTION';
+      else if(/CLEAN|NO CRITICAL/i.test(t)) data.verdict='CLEAN';
+    }
 
-banner() {
-  printf '%s' "$BLUE"
-  cat <<'EOF'
- +----------------------------------------------------------+
- |   LINUX AUDIT TOOL                                       |
- |   READ-ONLY SECURITY CONFIGURATION & PERMISSION AUDIT   |
- +----------------------------------------------------------+
-EOF
-  printf '%s' "$RESET"
-  printf '  Started : %s\\n' "$(date '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)"
-  printf '  Mode    : read-only (no changes are made to this system)\\n'
-}
+    // Findings
+    let type=null, text2='';
+    if(/\[CRITICAL\]/i.test(t)){
+      type='crit';
+      text2=t.replace(/.*\[CRITICAL\]\s*/i,'').trim();
+      data.crit=data.crit; // already counted from summary
+    } else if(/\[REVIEW\]/i.test(t)){
+      type='review';
+      text2=t.replace(/.*\[REVIEW\]\s*/i,'').trim();
+    } else if(/\[\s*OK\s*\]/i.test(t)){
+      type='ok';
+      text2=t.replace(/.*\[\s*OK\s*\]\s*/i,'').trim();
+    } else if(/\[INFO\]/i.test(t)){
+      type='info';
+      text2=t.replace(/.*\[INFO\]\s*/i,'').trim();
+    }
 
-audit_path() {
-  local entry issues=0; local -a entries; chk
-  [[ ":$PATH:" == *"::"* ]] && { crit "\\$PATH has empty entry (current dir)"; issues=$((issues+1)); }
-  IFS=':' read -r -a entries <<< "$PATH"
-  for entry in "\${entries[@]}"; do
-    [ -n "$entry" ] || continue
-    case "$entry" in /*) ;; *) crit "\\$PATH has relative entry: '$entry'"; issues=$((issues+1)); continue ;; esac
-    if [ -d "$entry" ] && [ -n "$(find -H "$entry" -maxdepth 0 -perm -0002 2>/dev/null)" ]; then
-      crit "\\$PATH dir is world-writable: $entry"; issues=$((issues+1)); fi
-  done
-  [ "$issues" -eq 0 ] && ok "\\$PATH has no dangerous entries"
-}
-
-audit_profile() {
-  section "1. SYSTEM & ENVIRONMENT PROFILE"
-  local os="" g gflag=0
-  [ -r /etc/os-release ] && os=$(grep -m1 '^PRETTY_NAME=' /etc/os-release 2>/dev/null | sed 's/^PRETTY_NAME=//;s/^"//;s/"$//')
-  [ -z "$os" ] && [ -r /etc/redhat-release ] && os=$(head -n1 /etc/redhat-release 2>/dev/null)
-  [ -n "$os" ] || os=$(uname -s 2>/dev/null)
-  kv "OS release:" "$os"; kv "Kernel:" "$(uname -r 2>/dev/null)"
-  kv "Hostname:" "$(uname -n 2>/dev/null)"; kv "Architecture:" "$(uname -m 2>/dev/null)"
-  kv "User:" "$USER_NOW"; kv "UID:" "$UID_NOW"
-  kv "GID:" "$(id -g 2>/dev/null)"; kv "Groups:" "$(id -Gn 2>/dev/null) [$(id -G 2>/dev/null)]"
-  chk
-  if [ "$UID_NOW" -eq 0 ]; then
-    note "Running as root: checks use world-accessible mode bits"
-  else
-    for g in $(id -Gn 2>/dev/null); do
-      case "$g" in
-        docker|lxd|lxc|disk|shadow|root) crit "User in group '$g' (root-equivalent)"; gflag=1 ;;
-        sudo|wheel|admin|adm) warn "User in privileged group '$g'"; gflag=1 ;;
-      esac
-    done
-    [ "$gflag" -eq 0 ] && ok "User not in known privileged groups"
-  fi
-  audit_path
-}
-
-audit_sudo() {
-  section "2. PRIVILEGED ACCESS & SUDOERS"
-  local out rc f found=0; chk
-  if command -v sudo >/dev/null 2>&1; then
-    out=$(sudo -n -l 2>/dev/null </dev/null); rc=$?
-    if [ "$rc" -eq 0 ]; then
-      printf '%s\\n' "$out" | grep -Eq 'NOPASSWD:.*(ALL|/bin/(ba)?sh)' && crit "Passwordless sudo with ALL access" || warn "sudo -n -l succeeded (sudo rights exist)"
-      printf '%s\\n' "$out" | while IFS= read -r f; do plain "$f"; done
-    else ok "sudo requires password or no rights"; fi
-  else note "sudo not installed"; fi
-  chk
-  if [ -e /etc/sudoers ]; then
-    can_write /etc/sudoers && crit "/etc/sudoers WRITABLE ($(stat_brief /etc/sudoers))" || \
-    { can_read /etc/sudoers && crit "/etc/sudoers READABLE ($(stat_brief /etc/sudoers))" || \
-      ok "/etc/sudoers not accessible ($(stat_brief /etc/sudoers))"; }
-  else note "/etc/sudoers not found"; fi
-  chk
-  if [ -d /etc/sudoers.d ]; then
-    can_write /etc/sudoers.d && { crit "/etc/sudoers.d WRITABLE"; found=1; }
-    for f in /etc/sudoers.d/*; do
-      [ -e "$f" ] || continue
-      can_write "$f" && { crit "$f WRITABLE ($(stat_brief "$f"))"; found=1; } || \
-      { can_read "$f" && { crit "$f READABLE ($(stat_brief "$f"))"; found=1; }; }
-    done
-    [ "$found" -eq 0 ] && ok "/etc/sudoers.d not accessible"
-  else note "/etc/sudoers.d not found"; fi
-}
-
-report_bits() {
-  local kind="$1" list="$2" f base meta n=0 hits=0
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue; n=$((n+1)); base=\${f##*/}; meta=$(stat_brief "$f")
-    if is_gtfo "$base"; then hits=$((hits+1)); crit_hl "$kind $meta $f  <-- GTFOBins: $base"
-    else warn "$kind $meta $f"; fi
-  done <<< "$list"
-  [ "$n" -eq 0 ] && ok "No $kind files found" || plain "$kind total: $n | GTFOBins: $hits"
-}
-
-audit_suid_sgid() {
-  section "3. SUID & SGID BINARIES"; local suid sgid; chk
-  printf '  Enumerating SUID files...\\n'
-  suid=$(find / \\( -path /proc -o -path /sys \\) -prune -o -type f -perm -4000 -print 2>/dev/null | sort)
-  report_bits "SUID" "$suid"; chk
-  printf '  Enumerating SGID files...\\n'
-  sgid=$(find / \\( -path /proc -o -path /sys \\) -prune -o -type f -perm -2000 -print 2>/dev/null | sort)
-  report_bits "SGID" "$sgid"
-}
-
-check_write_path() {
-  local p="$1" recurse="$2" w; [ -e "$p" ] || return 0; chk
-  can_write "$p" && crit "$p WRITABLE ($(stat_brief "$p"))" || ok "$p not writable ($(stat_brief "$p"))"
-  if [ -d "$p" ]; then
-    [ "$recurse" -eq 1 ] && w=$(find_writable "$p" -mindepth 1 \\( -type f -o -type d \\)) || \
-                             w=$(find_writable "$p" -mindepth 1 -maxdepth 1 \\( -type f -o -type d \\))
-    [ -n "$w" ] && report_paths crit "Writable inside $p" "$w"
-  fi
-}
-
-audit_sensitive_perms() {
-  section "4. SENSITIVE FILE & DIRECTORY PERMISSIONS"; local f d ww sticky ns
-  for f in /etc/passwd /etc/shadow /etc/group; do
-    chk
-    if [ ! -e "$f" ]; then note "$f not found"
-    elif can_write "$f"; then crit "$f WRITABLE ($(stat_brief "$f"))"
-    else ok "$f not writable ($(stat_brief "$f"))"; fi
-  done
-  chk
-  if [ -e /etc/shadow ]; then
-    can_read /etc/shadow && crit "/etc/shadow READABLE ($(stat_brief /etc/shadow))" || ok "/etc/shadow not readable"
-  else note "/etc/shadow not found"; fi
-  check_write_path /etc/crontab 0
-  for d in /etc/cron.*; do [ -e "$d" ] && check_write_path "$d" 0; done
-  check_write_path /etc/systemd/system 1
-  chk
-  printf '  Scanning for world-writable dirs...\\n'
-  ww=$(find / \\( -path /proc -o -path /sys -o -path /tmp -o -path /var/tmp -o -path /dev/shm \\) -prune \\
-        -o -type d -perm -0002 ! -perm -1000 -print 2>/dev/null | sort)
-  [ -n "$ww" ] && report_paths crit "World-writable dir (no sticky)" "$ww" || ok "No world-writable dirs without sticky bit"
-  chk
-  sticky=$(find / \\( -path /proc -o -path /sys -o -path /tmp -o -path /var/tmp -o -path /dev/shm \\) -prune \\
-        -o -type d -perm -1002 -print 2>/dev/null | sort)
-  ns=$(printf '%s\\n' "$sticky" | grep -c .)
-  [ "$ns" -gt 0 ] && warn "$ns world-writable dirs with sticky bit (usually benign)" || ok "No sticky world-writable dirs"
-}
-
-extract_cron_targets() {
-  sed -E 's/[0-9&]*>>?[[:space:]]*[^[:space:]]+//g' | tr '\\047"();|&<>\`$' ' ' | \
-  awk '{for(i=1;i<=NF;i++) if($i~/^\\//) print $i}' | sort -u
-}
-
-check_cron_target() {
-  local p="$1" src="$2" parent
-  case "$p" in /dev/*|/proc/*|/sys/*|*'*'*) return 0 ;; esac
-  parent=$(dirname "$p")
-  if [ -f "$p" ]; then
-    chk; can_write "$p" && crit "Cron $p WRITABLE ($(stat_brief "$p"))" || ok "Cron $p not writable"
-  elif [ ! -e "$p" ] && [ -d "$parent" ]; then
-    chk; can_write "$parent" && crit "Cron $p MISSING, parent writable"
-  fi
-}
-
-process_cron_file() {
-  local f="$1" entries n line targets p
-  [ -f "$f" ] && [ -r "$f" ] || return 0
-  entries=$(grep -v -E '^[[:space:]]*(#|$)' "$f" 2>/dev/null | grep -v -E '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=')
-  n=$(printf '%s\\n' "$entries" | grep -c .); chk
-  printf '  %sReading %s%s (%s entries)\\n' "$BOLD" "$f" "$RESET" "$n"
-  [ "$n" -gt 0 ] || return 0
-  while IFS= read -r line; do [ -n "$line" ] && warn "$(printf '%s' "$line" | cut -c1-150)"; done <<< "$entries"
-  targets=$(printf '%s\\n' "$entries" | extract_cron_targets)
-  while IFS= read -r p; do [ -n "$p" ] && check_cron_target "$p" "$f"; done <<< "$targets"
-}
-
-audit_cron() {
-  section "5. CRON JOBS & SCHEDULED TASKS"; local f d s names count
-  process_cron_file /etc/crontab; process_cron_file /etc/anacrontab
-  [ -d /etc/cron.d ] && for f in /etc/cron.d/*; do process_cron_file "$f"; done
-  for d in /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly; do
-    [ -d "$d" ] || continue; chk; names=""; count=0
-    for s in "$d"/*; do [ -f "$s" ] && { count=$((count+1)); names="$names \${s##*/}"; }; done
-    [ "$count" -gt 0 ] && warn "$d: $count script(s):$names" || ok "$d: empty"
-  done
-  chk
-  if [ -d /var/spool/cron/crontabs ] && [ -r /var/spool/cron/crontabs ]; then
-    for f in /var/spool/cron/crontabs/*; do process_cron_file "$f"; done
-  else ok "/var/spool/cron/crontabs not readable"; fi
-}
-
-audit_processes() {
-  section "6. RUNNING SERVICES & PROCESSES"; local procs roots total_root line uid pid args exe deleted susp=0
-  command -v ps >/dev/null 2>&1 || { chk; warn "ps not available"; return 0; }
-  procs=$(ps -eo uid=,pid=,args= 2>/dev/null); chk
-  roots=$(printf '%s\\n' "$procs" | awk '$1==0 && $3!~/^\\[/{$1="";sub(/^ +/,"");print}' | cut -c1-150)
-  total_root=$(printf '%s\\n' "$roots" | grep -c .)
-  note "$total_root root processes (kernel threads excluded)"
-  printf '%s\\n' "$roots" | head -n 60 | while IFS= read -r line; do [ -n "$line" ] && plain "root: $line"; done
-  chk
-  while read -r uid pid args; do
-    case "$uid" in ''|*[!0-9]*) continue ;; esac
-    case "$pid" in ''|*[!0-9]*) continue ;; esac
-    exe=$(readlink "/proc/$pid/exe" 2>/dev/null)
-    [ -z "$exe" ] && { first=\${args%% *}; case "$first" in /*) exe="$first" ;; *) continue ;; esac; }
-    deleted=0; case "$exe" in *" (deleted)") deleted=1; exe=\${exe% (deleted)} ;; esac
-    case "$exe" in
-      /tmp/*|/var/tmp/*|/dev/shm/*) crit "PID $pid (uid $uid) in temp path: $exe"; susp=$((susp+1)) ;;
-      /home/*) warn "PID $pid (uid $uid) in home path: $exe"; susp=$((susp+1)) ;;
-    esac
-    [ "$deleted" -eq 1 ] && { warn "PID $pid binary deleted: $exe"; susp=$((susp+1)); }
-    [ "$uid" -eq 0 ] && [ -f "$exe" ] && can_write "$exe" && { crit "Root PID $pid binary WRITABLE: $exe"; susp=$((susp+1)); }
-  done <<< "$procs"
-  [ "$susp" -eq 0 ] && ok "No suspicious process paths found"
-}
-
-box_border() { printf '%s+%s+%s\\n' "$BLUE" "$(printf '%48s' '' | tr ' ' '-')" "$RESET"; }
-box_line()   { printf '%s|%s %-46s %s|%s\\n' "$BLUE" "$RESET" "$1" "$BLUE" "$RESET"; }
-box_stat()   { printf '%s|%s  %-31s %s%-13s%s %s|%s\\n' "$BLUE" "$RESET" "$1" "$3" "$2" "$RESET" "$BLUE" "$RESET"; }
-
-print_summary() {
-  printf '\\n'; box_border; box_line "\${BOLD}AUDIT SUMMARY\${RESET}"; box_border
-  box_stat "Total checks executed:" "$TOTAL" "$BOLD"
-  box_stat "Critical / high-risk:" "$CRIT" "$BOLD_RED"
-  box_stat "Informational / review:" "$INFO" "$YELLOW"
-  box_stat "Passed checks:" "$PASS" "$GREEN"; box_border
-  [ "$CRIT" -gt 0 ] && box_stat "Verdict:" "ATTENTION" "$BOLD_RED" || box_stat "Verdict:" "CLEAN" "$GREEN"
-  box_border; printf '  Finished: %s\\n' "$(date '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)"
-}
-
-main() {
-  banner; audit_profile; audit_sudo; audit_suid_sgid
-  audit_sensitive_perms; audit_cron; audit_processes; print_summary
-  [ "$CRIT" -gt 0 ] && exit 1; exit 0
-}
-main`;
-
-/* ── DOWNLOAD FUNCTION ── */
-function downloadScript(){
-  const blob=new Blob([SCRIPT],{type:'text/plain'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download='linux_audit.sh';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-
-/* ── DEMO ── */
-const S={
-  clean:[
-    {t:0,h:'<span class="tg">$ sudo ./linux_audit.sh 2>&1 | less -R\n</span>'},
-    {t:350,h:'<span class="tb">\n+------------------------------------------+\n|  LINUX AUDIT TOOL                        |\n|  Read-only Security Audit                |\n+------------------------------------------+\n</span>'},
-    {t:700,h:'<span class="td">  Started : 2026-10-07 02:56:03 UTC\n  Mode    : read-only\n\n</span>'},
-    {t:950,h:'<span class="tb">=== 1. SYSTEM PROFILE ===\n</span>'},
-    {t:1050,h:'<span class="tw">  OS: Ubuntu 26.04 LTS  |  Kernel: 7.0.0-22\n  User: admin  UID: 1000\n</span>'},
-    {t:1200,h:'<span class="tg">  [ OK ]   $PATH — no dangerous entries\n  [ OK ]   User not in privileged groups\n\n</span>'},
-    {t:1400,h:'<span class="tb">=== 2. SUDO ACCESS ===\n</span>'},
-    {t:1500,h:'<span class="tg">  [ OK ]   sudo requires password\n  [ OK ]   /etc/sudoers not readable\n\n</span>'},
-    {t:1700,h:'<span class="tb">=== 3. SUID / SGID ===\n</span>'},
-    {t:1800,h:'<span class="td">  Scanning filesystem...\n</span>'},
-    {t:2000,h:'<span class="ty">  [REVIEW]   /usr/bin/passwd  (expected)\n  [REVIEW]   /usr/bin/sudo    (expected)\n</span>'},
-    {t:2200,h:'<span class="tg">  [ OK ]   No GTFOBins matches\n\n</span>'},
-    {t:2400,h:'<span class="tb">=== 4. FILE PERMISSIONS ===\n</span>'},
-    {t:2500,h:'<span class="tg">  [ OK ]   /etc/passwd not writable\n  [ OK ]   /etc/shadow not readable\n  [ OK ]   No world-writable dirs\n\n</span>'},
-    {t:2700,h:'<span class="tb">+---------------------------+\n| AUDIT SUMMARY             |\n+---------------------------+\n</span>'},
-    {t:2800,h:'<span class="tw">  Total:    37\n</span>'},
-    {t:2900,h:'<span class="tr">  Critical: 0\n</span>'},
-    {t:3000,h:'<span class="ty">  Review:   12\n</span>'},
-    {t:3100,h:'<span class="tg">  Passed:   25\n  Verdict:  CLEAN ✓\n</span>'},
-  ],
-  suid:[
-    {t:0,h:'<span class="tg">$ sudo ./linux_audit.sh 2>&1 | less -R\n</span>'},
-    {t:400,h:'<span class="tb">\n=== 3. SUID / SGID BINARIES ===\n</span>'},
-    {t:600,h:'<span class="td">  Scanning filesystem...\n</span>'},
-    {t:900,h:'<span class="ty">  [REVIEW]   /usr/bin/passwd\n  [REVIEW]   /usr/bin/sudo\n</span>'},
-    {t:1300,h:'<span class="trb">  [CRITICAL] /tmp/audit_test/vim\n             GTFOBins match: vim\n             → :!/bin/sh gives root shell\n</span>'},
-    {t:1800,h:'<span class="trb">  [CRITICAL] /usr/bin/find\n             GTFOBins match: find\n             → find -exec /bin/sh \\; -quit\n</span>'},
-    {t:2300,h:'<span class="tw">\n  SUID total: 4  |  GTFOBins: 2\n\n</span>'},
-    {t:2500,h:'<span class="tb">=== SUMMARY ===\n</span>'},
-    {t:2600,h:'<span class="trb">  Critical: 2\n  Verdict:  ATTENTION ⚠\n</span>'},
-  ],
-  shadow:[
-    {t:0,h:'<span class="tg">$ sudo ./linux_audit.sh 2>&1 | less -R\n</span>'},
-    {t:400,h:'<span class="tb">\n=== 4. FILE PERMISSIONS ===\n</span>'},
-    {t:600,h:'<span class="tg">  [ OK ]   /etc/passwd not writable\n</span>'},
-    {t:900,h:'<span class="trb">  [CRITICAL] /etc/shadow READABLE\n             Mode: -rw-r--r-- (should be 640)\n             Hashed passwords exposed!\n</span>'},
-    {t:1500,h:'<span class="ty">\n  Fix:\n  sudo chmod 640 /etc/shadow\n  sudo chown root:shadow /etc/shadow\n\n</span>'},
-    {t:2100,h:'<span class="trb">=== SUMMARY ===\n  Critical: 1\n  Verdict:  ATTENTION ⚠\n</span>'},
-  ],
-  tmp:[
-    {t:0,h:'<span class="tg">$ sudo ./linux_audit.sh 2>&1 | less -R\n</span>'},
-    {t:400,h:'<span class="tb">\n=== 6. PROCESSES ===\n</span>'},
-    {t:700,h:'<span class="td">  Checking for suspicious paths...\n</span>'},
-    {t:1200,h:'<span class="trb">  [CRITICAL] PID 4821 (uid 1000)\n             executable in temp path:\n             /tmp/audit_sleep\n</span>'},
-    {t:1800,h:'<span class="ty">\n  Malware stages in /tmp.\n  Investigate immediately.\n\n  $ ls -la /tmp/audit_sleep\n  $ file /tmp/audit_sleep\n\n</span>'},
-    {t:2500,h:'<span class="trb">=== SUMMARY ===\n  Critical: 1\n  Verdict:  ATTENTION ⚠\n</span>'},
-  ],
-  path:[
-    {t:0,h:'<span class="tg">$ PATH="/tmp/bad:.:$PATH" ./linux_audit.sh\n</span>'},
-    {t:500,h:'<span class="tb">\n=== 1. SYSTEM PROFILE ===\n</span>'},
-    {t:800,h:'<span class="td">  Auditing $PATH...\n</span>'},
-    {t:1200,h:'<span class="trb">  [CRITICAL] $PATH has dot entry "."\n             Current dir in PATH!\n</span>'},
-    {t:1700,h:'<span class="trb">  [CRITICAL] $PATH dir world-writable:\n             /tmp/bad  (drwxrwxrwx)\n</span>'},
-    {t:2200,h:'<span class="ty">\n  Fix: remove "." from PATH in ~/.bashrc\n\n</span>'},
-    {t:2700,h:'<span class="trb">=== SUMMARY ===\n  Critical: 2\n  Verdict:  ATTENTION ⚠\n</span>'},
-  ]
-};
-
-let T=[];
-function clr(){T.forEach(clearTimeout);T=[];}
-function run(n){
-  clr();
-  document.querySelectorAll('.sb').forEach(b=>b.classList.remove('on'));
-  document.getElementById('sb-'+n).classList.add('on');
-  const out=document.getElementById('tout');
-  const pf=document.getElementById('pf');
-  const ps=document.getElementById('pst');
-  out.innerHTML='';pf.style.width='0%';ps.textContent='Scanning...';
-  const frames=S[n];
-  const total=frames[frames.length-1].t+500;
-  frames.forEach(f=>{
-    const t=setTimeout(()=>{
-      out.innerHTML+=f.h;
-      document.getElementById('tbody').scrollTop=9999;
-      pf.style.width=Math.min(100,Math.round(f.t/total*100))+'%';
-    },f.t);
-    T.push(t);
+    if(type && text2 && text2.length>1){
+      const finding={type,text:text2,module:currentModule};
+      data.findings.push(finding);
+      if(currentModule>0) data.modules[currentModule].push(finding);
+    }
   });
-  T.push(setTimeout(()=>{pf.style.width='100%';ps.textContent='Complete';},total));
+
+  // If summary not parsed, count from findings
+  if(data.total===0){
+    data.crit=data.findings.filter(f=>f.type==='crit').length;
+    data.review=data.findings.filter(f=>f.type==='review').length;
+    data.pass=data.findings.filter(f=>f.type==='ok').length;
+    data.info=data.findings.filter(f=>f.type==='info').length;
+    data.total=data.crit+data.review+data.pass+data.info;
+    data.verdict=data.crit>0?'ATTENTION':'CLEAN';
+  }
+
+  parsedData=data;
+  allFindings=data.findings;
+  renderReport(data);
 }
-function cp(btn,text){
-  navigator.clipboard.writeText(text).catch(()=>{});
-  const o=btn.textContent;
-  btn.textContent='✓';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';
-  setTimeout(()=>{btn.textContent=o;btn.style.color='';btn.style.borderColor='';},1500);
+
+/* ── RENDER ── */
+function renderReport(d){
+  document.getElementById('landing').style.display='none';
+  document.getElementById('report-page').style.display='block';
+
+  // Header
+  document.getElementById('rep-host').textContent=d.host||'Unknown Host';
+  document.getElementById('rep-os').textContent=d.os;
+  document.getElementById('rep-kernel').textContent=d.kernel;
+  document.getElementById('rep-user').textContent=d.user;
+  document.getElementById('rep-arch').textContent=d.arch;
+  document.getElementById('rep-time').textContent='Started: '+d.started;
+
+  const vb=document.getElementById('verdict-badge');
+  if(d.verdict==='ATTENTION'){
+    vb.textContent='⚠ ATTENTION'; vb.className='verdict-badge verdict-attn';
+  } else {
+    vb.textContent='✓ CLEAN'; vb.className='verdict-badge verdict-clean';
+  }
+
+  // Stats
+  animNum('sc-total',d.total);
+  animNum('sc-crit',d.crit);
+  animNum('sc-review',d.review);
+  animNum('sc-pass',d.pass);
+
+  // Charts
+  setTimeout(()=>{
+    renderDonut(d);
+    renderBar(d);
+    renderGauge(d);
+  },100);
+
+  // Modules
+  renderModules(d);
+
+  // Findings
+  renderFindings(allFindings);
+
+  // Recommendations
+  renderRecs(d);
+
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-run('clean');
+
+/* ── ANIMATE NUMBERS ── */
+function animNum(id,target){
+  const el=document.getElementById(id);
+  let cur=0; const step=Math.ceil(target/30);
+  const t=setInterval(()=>{
+    cur=Math.min(cur+step,target);
+    el.textContent=cur;
+    if(cur>=target)clearInterval(t);
+  },30);
+}
+
+/* ── CHARTS ── */
+let charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderDonut(d){
+  destroyChart('donut');
+  const ctx=document.getElementById('donutChart').getContext('2d');
+  charts['donut']=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['Critical','Review','Passed','Info'],
+      datasets:[{
+        data:[d.crit,d.review,d.pass,d.info||0],
+        backgroundColor:['rgba(239,68,68,.8)','rgba(245,158,11,.8)','rgba(34,197,94,.8)','rgba(79,127,255,.8)'],
+        borderColor:['#ef4444','#f59e0b','#22c55e','#4f7fff'],
+        borderWidth:1,
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#64748b',font:{size:10},padding:8}}},
+      cutout:'65%'
+    }
+  });
+}
+
+function renderBar(d){
+  destroyChart('bar');
+  const ctx=document.getElementById('barChart').getContext('2d');
+  const mNames=['System','Sudo','SUID','Files','Cron','Processes'];
+  const mCrits=mNames.map((_,i)=>d.modules[i+1].filter(f=>f.type==='crit').length);
+  const mReview=mNames.map((_,i)=>d.modules[i+1].filter(f=>f.type==='review').length);
+  charts['bar']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:mNames,
+      datasets:[
+        {label:'Critical',data:mCrits,backgroundColor:'rgba(239,68,68,.7)',borderRadius:4},
+        {label:'Review',data:mReview,backgroundColor:'rgba(245,158,11,.7)',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#64748b',font:{size:10},padding:8}}},
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+function renderGauge(d){
+  destroyChart('gauge');
+  const ctx=document.getElementById('gaugeChart').getContext('2d');
+  const total=Math.max(d.total,1);
+  const score=Math.max(0,Math.min(100,Math.round(100-(d.crit*15+d.review*3)/total*100)));
+  const color=score>=80?'rgba(34,197,94,.8)':score>=50?'rgba(245,158,11,.8)':'rgba(239,68,68,.8)';
+  charts['gauge']=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      datasets:[{
+        data:[score,100-score],
+        backgroundColor:[color,'rgba(255,255,255,.05)'],
+        borderColor:[color.replace('.8','.9'),'transparent'],
+        borderWidth:1
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      circumference:180,rotation:-90,
+      plugins:{
+        legend:{display:false},
+        tooltip:{enabled:false}
+      },
+      cutout:'70%'
+    }
+  });
+  const lb=score>=80?'LOW RISK':score>=50?'MEDIUM RISK':'HIGH RISK';
+  document.getElementById('risk-label').innerHTML=`<span style="font-size:1.4rem;font-weight:800;color:${color.includes('34,197')?'#22c55e':color.includes('245,158')?'#f59e0b':'#ef4444'}">${score}</span><br><span style="font-size:.65rem;letter-spacing:1px">${lb}</span>`;
+}
+
+/* ── MODULES STATUS ── */
+const MODULE_NAMES={1:'System Profile',2:'Sudo Access',3:'SUID / SGID',4:'File Permissions',5:'Cron Jobs',6:'Processes'};
+const MODULE_ICONS={1:'🖥️',2:'🔑',3:'⚡',4:'🔒',5:'⏱️',6:'📡'};
+
+function renderModules(d){
+  const g=document.getElementById('modules-grid');
+  g.innerHTML='';
+  for(let i=1;i<=6;i++){
+    const mf=d.modules[i];
+    const crits=mf.filter(f=>f.type==='crit').length;
+    const color=crits>0?'var(--red)':mf.some(f=>f.type==='review')?'var(--yellow)':'var(--green)';
+    g.innerHTML+=`<div class="mod-status">
+      <div class="mod-dot" style="background:${color}"></div>
+      <div class="mod-info">
+        <div class="mod-name-s">${MODULE_ICONS[i]} ${MODULE_NAMES[i]}</div>
+        <div class="mod-count">${crits>0?`${crits} critical`:'No critical findings'}</div>
+      </div>
+    </div>`;
+  }
+}
+
+/* ── FINDINGS LIST ── */
+function renderFindings(findings){
+  const el=document.getElementById('findings-list');
+  if(!findings.length){el.innerHTML='<div class="empty">No findings to display.</div>';return;}
+  el.innerHTML=findings.map(f=>{
+    const cls=f.type==='crit'?'crit':f.type==='review'?'review':f.type==='ok'?'ok':'info';
+    const badge=f.type==='crit'?'<span class="fib fib-c">CRITICAL</span>':
+                 f.type==='review'?'<span class="fib fib-r">REVIEW</span>':
+                 f.type==='ok'?'<span class="fib fib-o">OK</span>':
+                 '<span class="fib fib-i">INFO</span>';
+    const mod=f.module>0?`Module ${f.module} — ${MODULE_NAMES[f.module]}`:'General';
+    return `<div class="finding-item ${cls}">
+      <div class="fi-badge">${badge}</div>
+      <div class="fi-body">
+        <div class="fi-text">${escHtml(f.text)}</div>
+        <div class="fi-module">${mod}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ── FILTER ── */
+function filterFindings(type,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>{b.className='filter-btn';});
+  btn.classList.add('on');
+  const filtered=type==='all'?allFindings:allFindings.filter(f=>f.type===type);
+  renderFindings(filtered);
+}
+
+/* ── RECOMMENDATIONS ── */
+const RECS=[
+  {trigger:f=>f.type==='crit'&&/shadow.*readable|readable.*shadow/i.test(f.text),
+   icon:'🔓',title:'Secure /etc/shadow permissions',
+   desc:'The shadow file is readable by non-root users, exposing password hashes to offline cracking.',
+   cmd:'sudo chmod 640 /etc/shadow && sudo chown root:shadow /etc/shadow'},
+  {trigger:f=>f.type==='crit'&&/passwd.*writable|writable.*passwd/i.test(f.text),
+   icon:'📝',title:'Secure /etc/passwd permissions',
+   desc:'The passwd file is writable. An attacker can add a root user directly.',
+   cmd:'sudo chmod 644 /etc/passwd && sudo chown root:root /etc/passwd'},
+  {trigger:f=>f.type==='crit'&&/GTFOBins|suid.*vim|suid.*find|suid.*python|suid.*bash/i.test(f.text),
+   icon:'⚡',title:'Remove SUID from dangerous binaries',
+   desc:'SUID binaries matching GTFOBins allow privilege escalation to root by any local user.',
+   cmd:'sudo chmod u-s /path/to/binary   # replace with actual path'},
+  {trigger:f=>f.type==='crit'&&/sudoers.*writable|writable.*sudoers/i.test(f.text),
+   icon:'🔑',title:'Fix sudoers file permissions',
+   desc:'The sudoers file is writable. An attacker can grant themselves full root access.',
+   cmd:'sudo chmod 440 /etc/sudoers && sudo chown root:root /etc/sudoers'},
+  {trigger:f=>f.type==='crit'&&/world.writable|writable.*dir/i.test(f.text),
+   icon:'📁',title:'Remove world-writable directories',
+   desc:'World-writable directories without sticky bits allow attackers to plant malicious files.',
+   cmd:'sudo chmod o-w /path/to/dir   # or add sticky: sudo chmod +t /path/to/dir'},
+  {trigger:f=>f.type==='crit'&&/PATH.*dot|relative.*PATH|world.writable.*PATH/i.test(f.text),
+   icon:'🛤️',title:'Fix dangerous $PATH entries',
+   desc:'A dot or world-writable directory in $PATH allows PATH hijacking attacks.',
+   cmd:"# Edit ~/.bashrc and remove '.' from PATH\nexport PATH=$(echo $PATH | tr ':' '\\n' | grep -v '^\\.$' | tr '\\n' ':')"},
+  {trigger:f=>f.type==='crit'&&/\/tmp|\/dev\/shm|temp.*path/i.test(f.text),
+   icon:'🦠',title:'Investigate process in /tmp',
+   desc:'A process running from /tmp is a common malware indicator. Investigate immediately.',
+   cmd:'ls -la /proc/PID/exe && strings /proc/PID/exe | head -50'},
+  {trigger:f=>f.type==='crit'&&/NOPASSWD.*ALL|passwordless.*sudo/i.test(f.text),
+   icon:'🔐',title:'Restrict passwordless sudo',
+   desc:'Passwordless sudo with ALL access is extremely dangerous. Restrict to specific commands.',
+   cmd:'sudo visudo   # Change NOPASSWD:ALL to specific commands only'},
+];
+
+function renderRecs(d){
+  const shown=new Set();
+  const el=document.getElementById('recs-list');
+  const items=[];
+  RECS.forEach(rec=>{
+    if(!shown.has(rec.title)&&d.findings.some(rec.trigger)){
+      shown.add(rec.title);
+      items.push(`<div class="rec-item">
+        <div class="rec-icon" style="background:rgba(239,68,68,.1)">${rec.icon}</div>
+        <div>
+          <div class="rec-title">${rec.title}</div>
+          <div class="rec-desc">${rec.desc}</div>
+          <div class="rec-cmd">${escHtml(rec.cmd)}</div>
+        </div>
+      </div>`);
+    }
+  });
+  if(!items.length){
+    el.innerHTML='<div class="empty" style="color:var(--green)">✓ No critical recommendations — system looks good!</div>';
+  } else {
+    el.innerHTML=items.join('');
+  }
+}
+
+/* ── DEMO DATA ── */
+function loadDemo(){
+  const demo=`Linux Audit Tool v1.0
+  Started : 2026-10-07 02:56:03 UTC
+  Mode    : read-only
+
+=== 1. SYSTEM & ENVIRONMENT PROFILE ===
+  OS release:          Ubuntu 26.04 LTS
+  Kernel:              7.0.0-22-generic
+  Hostname:            ubuntu
+  Architecture:        x86_64
+  User:                admin123
+  [INFO]     Running as root
+  [ OK ]     $PATH has no dangerous entries
+
+=== 2. PRIVILEGED ACCESS & SUDOERS ===
+  [REVIEW]   sudo -n -l succeeded without a password prompt
+  [ OK ]     /etc/sudoers not accessible
+
+=== 3. SUID & SGID BINARIES ===
+  [CRITICAL] SUID -rwsr-xr-x root:root /tmp/audit_test/vim  <-- GTFOBins: vim
+  [CRITICAL] SUID -rwsr-xr-x root:root /tmp/audit_test/python3  <-- GTFOBins: python3
+  [REVIEW]   SUID -rwsr-xr-x root:root /usr/bin/passwd
+  [REVIEW]   SUID -rwsr-xr-x root:root /usr/bin/sudo
+  [REVIEW]   SUID -rwsr-xr-x root:root /usr/bin/mount
+  [REVIEW]   SGID -rwxr-sr-x root:shadow /usr/bin/expiry
+
+=== 4. SENSITIVE FILE & DIRECTORY PERMISSIONS ===
+  [CRITICAL] /etc/shadow is READABLE by admin123 (-rw-r--r--)
+  [ OK ]     /etc/passwd not writable
+  [ OK ]     /etc/group not writable
+  [ OK ]     /etc/crontab not writable
+  [ OK ]     No world-writable directories without sticky bit
+
+=== 5. CRON JOBS & SCHEDULED TASKS ===
+  [REVIEW]   /etc/cron.daily: 3 script(s): apport logrotate man-db
+  [REVIEW]   /etc/cron.weekly: 1 script(s): man-db
+  [ OK ]     /var/spool/cron/crontabs not readable
+
+=== 6. RUNNING SERVICES & PROCESSES ===
+  [INFO]     47 root processes running
+  [CRITICAL] PID 44091 (uid 1000) runs from temp path: /tmp/suspicious_process
+  [ OK ]     No writable root process binaries found
+
++------------------------------------------------+
+| AUDIT SUMMARY                                  |
++------------------------------------------------+
+  Total checks executed:           37
+  Critical / high-risk alerts:      4
+  Informational / review items:    10
+  Passed checks:                   23
++------------------------------------------------+
+  Verdict:                   ATTENTION
++------------------------------------------------+
+  Finished: 2026-10-07 02:58:06 UTC`;
+  parseAndRender(demo,'demo_report.txt');
+}
+
+/* ── NAV ── */
+function showLanding(){
+  document.getElementById('report-page').style.display='none';
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('fileInput').value='';
+}
+
+/* ── EXPORT ── */
+function exportTxt(){
+  const d=parsedData;
+  let out=`LINUX AUDIT REPORT\n${'='.repeat(50)}\n`;
+  out+=`Host:     ${d.host}\nOS:       ${d.os}\nKernel:   ${d.kernel}\nUser:     ${d.user}\nStarted:  ${d.started}\n\n`;
+  out+=`SUMMARY\n${'-'.repeat(30)}\nTotal:    ${d.total}\nCritical: ${d.crit}\nReview:   ${d.review}\nPassed:   ${d.pass}\nVerdict:  ${d.verdict}\n\nFINDINGS\n${'-'.repeat(30)}\n`;
+  allFindings.forEach(f=>{out+=`[${f.type.toUpperCase()}] ${f.text}\n`;});
+  const blob=new Blob([out],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audit_report_summary.txt';a.click();
+}
+
+/* ── DOWNLOAD SCRIPT ── */
+function downloadScript(){
+  const s=`#!/usr/bin/env bash
+# linux_audit.sh - READ-ONLY Linux Security Audit Tool
+# Usage: ./linux_audit.sh [--no-color] | Save: ./linux_audit.sh --no-color > report.txt
+# Full script available at: https://github.com/anweshika-mehta-1905/linux-audit-tool
+#
+# This is a placeholder. Download the full script from your GitHub repository.
+echo "Please download the full script from GitHub."
+echo "https://github.com/anweshika-mehta-1905/linux-audit-tool"`;
+  const blob=new Blob([s],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='linux_audit.sh';a.click();
+}
 </script>
 </body>
 </html>
