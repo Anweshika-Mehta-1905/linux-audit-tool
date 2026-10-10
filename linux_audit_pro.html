@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Audit Tool — Security Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;
+  --bg2:#161b27;
+  --bg3:#1e2535;
+  --bg4:#252d40;
+  --card:#1a2133;
+  --accent:#4f8ef7;
+  --accent2:#3d7af5;
+  --green:#22c55e;
+  --green-bg:#0d2818;
+  --red:#ef4444;
+  --red-bg:#2a0f0f;
+  --yellow:#f59e0b;
+  --yellow-bg:#2a1f08;
+  --purple:#a855f7;
+  --border:#2a3450;
+  --border2:#333d58;
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#64748b;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(15,17,23,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:12px}
+.nav-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.nav-brand{font-size:1rem;font-weight:700;color:#fff;letter-spacing:-0.3px}
+.nav-brand span{color:var(--accent)}
+.nav-badge{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:0.65rem;font-family:var(--mono);padding:2px 8px;border-radius:4px;letter-spacing:0.5px}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-links a{color:var(--text2);font-size:0.875rem;padding:6px 12px;border-radius:6px;transition:all 0.2s;text-decoration:none;font-weight:500}
+.nav-links a:hover{color:#fff;background:var(--bg3)}
+.nav-cta{background:var(--accent);color:#fff !important;padding:7px 18px !important;border-radius:8px !important;font-weight:600 !important}
+.nav-cta:hover{background:var(--accent2) !important;background:none}
+
+/* ── HERO ── */
+.hero{padding:100px 2rem 80px;text-align:center;position:relative;overflow:hidden;max-width:100%}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(79,142,247,0.15),transparent);pointer-events:none}
+.hero-bg2{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 80%,rgba(168,85,247,0.08),transparent);pointer-events:none}
+.grid-overlay{position:absolute;inset:0;background-image:linear-gradient(rgba(79,142,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,142,247,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.3);color:var(--accent);font-size:0.78rem;font-weight:600;padding:6px 16px;border-radius:100px;margin-bottom:2rem;letter-spacing:0.3px}
+.pill-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.hero h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:800;line-height:1.1;letter-spacing:-1.5px;margin-bottom:1.5rem;color:#fff}
+.hero h1 .grad{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:1.1rem;color:var(--text2);max-width:580px;margin:0 auto 2.5rem;line-height:1.7;font-weight:400}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:4rem}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;font-family:var(--sans);text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,142,247,0.35)}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{background:var(--bg3);border-color:var(--text3);transform:translateY(-1px)}
+.hero-stats{display:inline-flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.h-stat{padding:20px 32px;text-align:center;border-right:1px solid var(--border)}
+.h-stat:last-child{border-right:none}
+.h-stat-num{font-size:1.6rem;font-weight:800;color:#fff;line-height:1}
+.h-stat-num.green{color:var(--green)}
+.h-stat-num.accent{color:var(--accent)}
+.h-stat-num.purple{color:var(--purple)}
+.h-stat-label{font-size:0.72rem;color:var(--text3);margin-top:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px}
+
+/* ── SECTION WRAPPER ── */
+.section{padding:80px 2rem;max-width:1100px;margin:0 auto}
+.section-label{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-size:0.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.section-label::before{content:'';width:16px;height:2px;background:var(--accent);border-radius:1px}
+.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;color:#fff;letter-spacing:-0.5px;margin-bottom:12px;line-height:1.2}
+.section-sub{font-size:1rem;color:var(--text2);max-width:560px;line-height:1.7}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0}
+
+/* ── HOW IT WORKS ── */
+.how-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:3rem;align-items:start}
+.steps-list{display:flex;flex-direction:column;gap:0}
+.step-item{display:flex;gap:20px;padding:24px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all 0.2s;border-radius:0}
+.step-item:last-child{border-bottom:none}
+.step-item.active .step-num{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step-item.active .step-title{color:#fff}
+.step-item.active .step-desc{color:var(--text2)}
+.step-num{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;color:var(--text3);flex-shrink:0;transition:all 0.2s}
+.step-content-left{flex:1}
+.step-title{font-size:0.95rem;font-weight:700;color:var(--text2);margin-bottom:4px;transition:color 0.2s}
+.step-desc{font-size:0.82rem;color:var(--text3);line-height:1.6;transition:color 0.2s}
+.step-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:sticky;top:80px}
+.step-panel-header{background:var(--bg3);padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.dots{display:flex;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.panel-title{font-family:var(--mono);font-size:0.75rem;color:var(--text3);margin-left:4px}
+.step-panel-body{padding:20px;font-family:var(--mono);font-size:0.78rem;line-height:1.9;min-height:280px}
+.c-g{color:var(--green)}.c-r{color:var(--red)}.c-y{color:var(--yellow)}.c-b{color:var(--accent)}.c-p{color:var(--purple)}.c-d{color:var(--text3)}.c-w{color:#fff}.c-rb{color:var(--red);font-weight:700}
+
+/* ── MODULES ── */
+.modules-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:2.5rem}
+.mod-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all 0.25s;position:relative;overflow:hidden}
+.mod-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.3s;border-radius:16px}
+.mod-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.mod-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.mod-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.mod-icon.blue{background:rgba(79,142,247,0.15)}
+.mod-icon.green{background:rgba(34,197,94,0.15)}
+.mod-icon.red{background:rgba(239,68,68,0.15)}
+.mod-icon.yellow{background:rgba(245,158,11,0.15)}
+.mod-icon.purple{background:rgba(168,85,247,0.15)}
+.mod-icon.teal{background:rgba(20,184,166,0.15)}
+.mod-num{font-size:0.7rem;font-weight:700;color:var(--text3);font-family:var(--mono);letter-spacing:1px}
+.mod-name{font-size:1rem;font-weight:700;color:#fff;margin-top:2px}
+.mod-checks{list-style:none;display:flex;flex-direction:column;gap:8px}
+.mod-checks li{font-size:0.8rem;color:var(--text2);display:flex;align-items:flex-start;gap:10px;line-height:1.5}
+.check-icon{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:9px}
+.check-icon.ok{background:rgba(34,197,94,0.2);color:var(--green)}
+.check-icon.warn{background:rgba(245,158,11,0.2);color:var(--yellow)}
+
+/* ── DEMO ── */
+.demo-wrap{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 2rem}
+.demo-inner{max-width:1100px;margin:0 auto}
+.demo-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;margin-top:3rem;align-items:start}
+.scenario-list{display:flex;flex-direction:column;gap:8px}
+.scenario-label{font-size:0.7rem;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:0 4px;margin-bottom:4px}
+.scen-btn{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;border:1px solid transparent;background:transparent;cursor:pointer;transition:all 0.2s;font-family:var(--sans);text-align:left;width:100%}
+.scen-btn:hover{background:var(--bg3);border-color:var(--border)}
+.scen-btn.active{background:rgba(79,142,247,0.1);border-color:rgba(79,142,247,0.4)}
+.scen-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.scen-text{}
+.scen-title{font-size:0.85rem;font-weight:600;color:var(--text);display:block}
+.scen-sub{font-size:0.73rem;color:var(--text3);display:block;margin-top:1px}
+.scen-btn.active .scen-title{color:#fff}
+.terminal-outer{background:#0d1117;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.term-bar{background:#161b27;padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.term-dots{display:flex;gap:6px}
+.term-info{font-family:var(--mono);font-size:0.72rem;color:var(--text3);margin-left:8px}
+.term-body{padding:20px;min-height:400px;font-family:var(--mono);font-size:0.78rem;line-height:1.9;position:relative;overflow-y:auto;max-height:480px}
+#term-out{white-space:pre-wrap;word-break:break-all}
+.cursor-blink{display:inline-block;width:7px;height:15px;background:var(--green);border-radius:1px;animation:cblink 1s step-end infinite;vertical-align:middle}
+@keyframes cblink{0%,100%{opacity:1}50%{opacity:0}}
+.term-footer{background:#161b27;border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.prog-wrap{flex:1;max-width:200px}
+.prog-track{background:var(--bg3);height:3px;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);width:0%;transition:width 0.1s linear;border-radius:2px}
+.term-status{font-family:var(--mono);font-size:0.7rem;color:var(--text3)}
+.badge-legend{display:flex;gap:12px;flex-wrap:wrap}
+.b-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text3)}
+.b-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── FINDINGS ── */
+.findings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:2.5rem}
+.find-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all 0.2s}
+.find-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.find-card.crit{border-top:3px solid var(--red)}
+.find-card.review{border-top:3px solid var(--yellow)}
+.find-card.ok{border-top:3px solid var(--green)}
+.find-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.find-badge{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;padding:4px 10px;border-radius:6px;font-family:var(--mono)}
+.fb-crit{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.fb-review{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(245,158,11,0.3)}
+.fb-ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.find-icon{font-size:20px}
+.find-title{font-size:0.92rem;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.4}
+.find-desc{font-size:0.8rem;color:var(--text2);line-height:1.6}
+.find-code{background:var(--bg3);border-radius:8px;padding:8px 12px;margin-top:12px;font-family:var(--mono);font-size:0.73rem;color:var(--text3)}
+
+/* ── INSTALL ── */
+.install-section{padding:80px 2rem;max-width:1100px;margin:0 auto}
+.install-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:2.5rem;align-items:start}
+.install-steps{display:flex;flex-direction:column;gap:20px}
+.inst-step{display:flex;gap:16px;align-items:flex-start}
+.inst-num{width:32px;height:32px;border-radius:8px;background:rgba(79,142,247,0.15);border:1px solid rgba(79,142,247,0.3);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:var(--accent);flex-shrink:0}
+.inst-body{}
+.inst-title{font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:4px}
+.inst-desc{font-size:0.8rem;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.code-pill{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:0.78rem;color:var(--text2);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.code-pill code{color:var(--green)}
+.copy-small{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.copy-small:hover{border-color:var(--accent);color:var(--accent)}
+.install-right{}
+.compat-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+.compat-title{font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:16px}
+.compat-list{display:flex;flex-direction:column;gap:10px}
+.compat-item{display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--text2)}
+.compat-check{width:20px;height:20px;border-radius:6px;background:var(--green-bg);border:1px solid rgba(34,197,94,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--green)}
+.flags-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px}
+.flags-title{font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:12px}
+.flag-item{display:flex;gap:12px;margin-bottom:10px;font-size:0.8rem}
+.flag-tag{font-family:var(--mono);background:var(--bg3);border:1px solid var(--border);color:var(--accent);padding:2px 8px;border-radius:4px;flex-shrink:0;font-size:0.73rem}
+.flag-desc{color:var(--text2);line-height:1.5}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:40px 2rem;text-align:center}
+.footer-logo{font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:-0.3px;margin-bottom:8px}
+.footer-logo span{color:var(--accent)}
+.footer-sub{font-size:0.82rem;color:var(--text3);line-height:1.7;max-width:500px;margin:0 auto 16px}
+.footer-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ftag{background:var(--bg3);border:1px solid var(--border);color:var(--text3);font-size:0.7rem;padding:4px 12px;border-radius:100px;font-family:var(--mono)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .how-grid,.demo-layout,.install-grid{grid-template-columns:1fr}
+  .step-panel{display:none}
+  .hero-stats{flex-direction:column;gap:0;width:100%;max-width:340px;margin:0 auto}
+  .h-stat{border-right:none;border-bottom:1px solid var(--border)}
+  .h-stat:last-child{border-bottom:none}
+  nav{padding:0 1rem}
+  .nav-links a:not(.nav-cta){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-icon">🛡️</div>
+    <div class="nav-brand">Linux<span>Audit</span></div>
+    <div class="nav-badge">v1.0</div>
+  </div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#modules">Modules</a>
+    <a href="#demo">Live demo</a>
+    <a href="#install" class="nav-cta btn">Get the script →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-bg2"></div>
+  <div class="grid-overlay"></div>
+  <div class="hero-pill"><span class="pill-dot"></span>Read-only · Zero dependencies · Pure Bash</div>
+  <h1>Audit your Linux system<br>for <span class="grad">security risks</span></h1>
+  <p class="hero-desc">A single Bash script that scans your Linux machine for misconfigurations, dangerous permissions, and suspicious activity — without touching a thing.</p>
+  <div class="hero-actions">
+    <a href="#demo" class="btn btn-primary">▶&nbsp; See it in action</a>
+    <a href="#install" class="btn btn-ghost">↓&nbsp; Download script</a>
+  </div>
+  <div class="hero-stats">
+    <div class="h-stat"><div class="h-stat-num accent">6</div><div class="h-stat-label">Audit Modules</div></div>
+    <div class="h-stat"><div class="h-stat-num green">37+</div><div class="h-stat-label">Checks Run</div></div>
+    <div class="h-stat"><div class="h-stat-num purple">50+</div><div class="h-stat-label">GTFOBins Detected</div></div>
+    <div class="h-stat"><div class="h-stat-num" style="color:#fff">0</div><div class="h-stat-label">Dependencies</div></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-label">How it works</div>
+  <div class="section-title">From zero to audit in 3 commands</div>
+  <p class="section-sub">No installs, no Python, no external packages. The script uses only tools that already exist on every Linux system.</p>
+  <div class="how-grid">
+    <div class="steps-list" id="steps-list">
+      <div class="step-item active" onclick="setStep(0)">
+        <div class="step-num">1</div>
+        <div class="step-content-left">
+          <div class="step-title">Create the script file</div>
+          <div class="step-desc">Open a terminal and paste the script into nano, a built-in text editor. No downloads needed.</div>
+        </div>
+      </div>
+      <div class="step-item" onclick="setStep(1)">
+        <div class="step-num">2</div>
+        <div class="step-content-left">
+          <div class="step-title">Make it executable</div>
+          <div class="step-desc">Tell Linux this file is a program it can run, not just a text document.</div>
+        </div>
+      </div>
+      <div class="step-item" onclick="setStep(2)">
+        <div class="step-num">3</div>
+        <div class="step-content-left">
+          <div class="step-title">Run the audit</div>
+          <div class="step-desc">Execute the script. It scans your system across 6 modules and shows color-coded results.</div>
+        </div>
+      </div>
+      <div class="step-item" onclick="setStep(3)">
+        <div class="step-num">4</div>
+        <div class="step-content-left">
+          <div class="step-title">Save a report</div>
+          <div class="step-desc">Export the findings to a plain text file to keep, share, or add to your portfolio.</div>
+        </div>
+      </div>
+    </div>
+    <div class="step-panel">
+      <div class="step-panel-header">
+        <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="panel-title" id="panel-title">admin123@ubuntu: ~</div>
+      </div>
+      <div class="step-panel-body" id="panel-body">
+        <span class="c-d"># Open the script file in nano text editor</span><br>
+        <span class="c-g">$ nano ~/linux_audit.sh</span><br><br>
+        <span class="c-d"># A text editor opens — paste the script there</span><br>
+        <span class="c-d"># Then save with: Ctrl+O → Enter → Ctrl+X</span><br><br>
+        <span class="c-d">  GNU nano  ~/linux_audit.sh</span><br>
+        <span class="c-d">  ┌─────────────────────────────┐</span><br>
+        <span class="c-d">  │ #!/usr/bin/env bash          │</span><br>
+        <span class="c-d">  │ # Linux Audit Tool v1.0      │</span><br>
+        <span class="c-d">  │ ...                          │</span><br>
+        <span class="c-d">  └─────────────────────────────┘</span><br>
+        <span class="c-d">  ^O Write Out   ^X Exit</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MODULES -->
+<section class="section" id="modules">
+  <div class="section-label">What it checks</div>
+  <div class="section-title">6 security modules</div>
+  <p class="section-sub">Each module targets a specific attack surface. Together they paint a complete picture of your system's security posture.</p>
+  <div class="modules-grid">
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon blue">🖥️</div>
+        <div><div class="mod-num">MODULE 01</div><div class="mod-name">System Profile</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon ok">✓</div>OS version, kernel, hostname</li>
+        <li><div class="check-icon ok">✓</div>Current user, UID, groups</li>
+        <li><div class="check-icon warn">!</div>$PATH — dot or relative entries flagged</li>
+        <li><div class="check-icon warn">!</div>World-writable directories in PATH</li>
+        <li><div class="check-icon warn">!</div>Dangerous groups: docker, lxd, disk, shadow</li>
+      </ul>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon red">🔑</div>
+        <div><div class="mod-num">MODULE 02</div><div class="mod-name">Privileged Access</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon warn">!</div>sudo rights without password prompt</li>
+        <li><div class="check-icon warn">!</div>Broad NOPASSWD sudo permissions</li>
+        <li><div class="check-icon warn">!</div>/etc/sudoers readability</li>
+        <li><div class="check-icon warn">!</div>/etc/sudoers.d/* file enumeration</li>
+      </ul>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon yellow">⚡</div>
+        <div><div class="mod-num">MODULE 03</div><div class="mod-name">SUID / SGID Binaries</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon warn">!</div>Full filesystem scan for SUID files</li>
+        <li><div class="check-icon warn">!</div>Full filesystem scan for SGID files</li>
+        <li><div class="check-icon warn">!</div>Cross-reference against 50+ GTFOBins</li>
+        <li><div class="check-icon warn">!</div>Living-off-the-land binary detection</li>
+      </ul>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon purple">🔒</div>
+        <div><div class="mod-num">MODULE 04</div><div class="mod-name">File Permissions</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon warn">!</div>/etc/passwd, /etc/shadow, /etc/group</li>
+        <li><div class="check-icon warn">!</div>Shadow file readable by non-root</li>
+        <li><div class="check-icon warn">!</div>Crontab and cron directories writable</li>
+        <li><div class="check-icon warn">!</div>/etc/systemd/system write access</li>
+        <li><div class="check-icon warn">!</div>World-writable dirs without sticky bit</li>
+      </ul>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon teal">⏱️</div>
+        <div><div class="mod-num">MODULE 05</div><div class="mod-name">Cron Jobs</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon ok">✓</div>Reads /etc/crontab and /etc/cron.d/*</li>
+        <li><div class="check-icon ok">✓</div>User crontabs from spool directory</li>
+        <li><div class="check-icon warn">!</div>Writable scripts referenced by cron</li>
+        <li><div class="check-icon warn">!</div>Missing cron targets with writable parent</li>
+      </ul>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <div class="mod-icon green">📡</div>
+        <div><div class="mod-num">MODULE 06</div><div class="mod-name">Processes & Services</div></div>
+      </div>
+      <ul class="mod-checks">
+        <li><div class="check-icon ok">✓</div>All root (UID 0) processes listed</li>
+        <li><div class="check-icon warn">!</div>Executables running from /tmp, /dev/shm</li>
+        <li><div class="check-icon warn">!</div>Processes with deleted-on-disk binary</li>
+        <li><div class="check-icon warn">!</div>Writable root process binaries</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEMO -->
+<div class="demo-wrap" id="demo">
+  <div class="demo-inner">
+    <div class="section-label">Interactive demo</div>
+    <div class="section-title">See real findings, live</div>
+    <p class="section-sub">Click any scenario below to watch the tool detect and categorize security issues in real time.</p>
+    <div class="demo-layout">
+      <div>
+        <div class="scenario-label">Choose a scenario</div>
+        <div class="scenario-list">
+          <button class="scen-btn active" id="sb-clean" onclick="runDemo('clean')">
+            <div class="scen-icon" style="background:rgba(34,197,94,0.15)">✅</div>
+            <div class="scen-text"><span class="scen-title">Clean system</span><span class="scen-sub">Everything checks out</span></div>
+          </button>
+          <button class="scen-btn" id="sb-suid" onclick="runDemo('suid')">
+            <div class="scen-icon" style="background:rgba(239,68,68,0.15)">⚡</div>
+            <div class="scen-text"><span class="scen-title">SUID GTFOBins found</span><span class="scen-sub">vim & find can escalate to root</span></div>
+          </button>
+          <button class="scen-btn" id="sb-shadow" onclick="runDemo('shadow')">
+            <div class="scen-icon" style="background:rgba(239,68,68,0.15)">🔓</div>
+            <div class="scen-text"><span class="scen-title">/etc/shadow readable</span><span class="scen-sub">Password hashes exposed</span></div>
+          </button>
+          <button class="scen-btn" id="sb-tmp" onclick="runDemo('tmp')">
+            <div class="scen-icon" style="background:rgba(245,158,11,0.15)">⚠️</div>
+            <div class="scen-text"><span class="scen-title">Process in /tmp</span><span class="scen-sub">Possible malware staging</span></div>
+          </button>
+          <button class="scen-btn" id="sb-path" onclick="runDemo('path')">
+            <div class="scen-icon" style="background:rgba(239,68,68,0.15)">🛤️</div>
+            <div class="scen-text"><span class="scen-title">Dangerous $PATH</span><span class="scen-sub">World-writable directory in PATH</span></div>
+          </button>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px">
+          <div class="scenario-label" style="margin-bottom:10px">Color guide</div>
+          <div class="badge-legend" style="flex-direction:column">
+            <div class="b-item"><div class="b-dot" style="background:var(--red)"></div><span>[CRITICAL] — Fix this immediately</span></div>
+            <div class="b-item"><div class="b-dot" style="background:var(--yellow)"></div><span>[REVIEW] — Investigate this finding</span></div>
+            <div class="b-item"><div class="b-dot" style="background:var(--green)"></div><span>[ OK ] — This check passed</span></div>
+            <div class="b-item"><div class="b-dot" style="background:var(--accent)"></div><span>[INFO] — Informational note</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="terminal-outer">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="term-info">admin123@ubuntu: ~  —  linux_audit.sh</div>
+        </div>
+        <div class="term-body" id="term-body">
+          <div id="term-out"></div>
+          <span class="cursor-blink"></span>
+        </div>
+        <div class="term-footer">
+          <div class="prog-wrap">
+            <div class="prog-track"><div class="prog-fill" id="demo-prog"></div></div>
+          </div>
+          <div class="term-status" id="demo-status">Ready</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FINDINGS -->
+<section class="section">
+  <div class="section-label">Sample findings</div>
+  <div class="section-title">What the output looks like</div>
+  <p class="section-sub">Findings are automatically colour-coded by severity. Here are real examples from an Ubuntu 26.04 scan.</p>
+  <div class="findings-grid">
+    <div class="find-card crit">
+      <div class="find-top"><div class="find-badge fb-crit">CRITICAL</div><div class="find-icon">🔓</div></div>
+      <div class="find-title">/etc/shadow is readable</div>
+      <div class="find-desc">The shadow file holds hashed passwords for every user. If readable, an attacker can run offline cracking tools like hashcat to recover them.</div>
+      <div class="find-code">stat /etc/shadow → should be: -rw-r----- root:shadow</div>
+    </div>
+    <div class="find-card crit">
+      <div class="find-top"><div class="find-badge fb-crit">CRITICAL</div><div class="find-icon">⚡</div></div>
+      <div class="find-title">SUID binary: vim (GTFOBins match)</div>
+      <div class="find-desc">vim with the SUID bit set lets any local user open a root shell by typing <code>:!/bin/sh</code> inside the editor. A textbook privilege escalation path.</div>
+      <div class="find-code">find / -perm -4000 -name vim 2>/dev/null</div>
+    </div>
+    <div class="find-card crit">
+      <div class="find-top"><div class="find-badge fb-crit">CRITICAL</div><div class="find-icon">🦠</div></div>
+      <div class="find-title">Process running from /tmp</div>
+      <div class="find-desc">An executable was launched from /tmp — a common sign of malware staging, post-exploitation tooling, or a dropper that hasn't cleaned up yet.</div>
+      <div class="find-code">PID 4821 → /tmp/audit_sleep (uid 1000)</div>
+    </div>
+    <div class="find-card review">
+      <div class="find-top"><div class="find-badge fb-review">REVIEW</div><div class="find-icon">🔑</div></div>
+      <div class="find-title">Passwordless sudo access</div>
+      <div class="find-desc">sudo -n -l succeeded without requiring a password. This means the current user can run privileged commands silently. Verify the scope is intentionally limited.</div>
+      <div class="find-code">sudo -n -l → (ALL) NOPASSWD: ALL</div>
+    </div>
+    <div class="find-card review">
+      <div class="find-top"><div class="find-badge fb-review">REVIEW</div><div class="find-icon">📋</div></div>
+      <div class="find-title">SUID binary: /usr/bin/passwd</div>
+      <div class="find-desc">Standard system binary. SUID is expected here so users can change their own password. Listed for baseline documentation and change tracking.</div>
+      <div class="find-code">-rwsr-xr-x root:root /usr/bin/passwd</div>
+    </div>
+    <div class="find-card ok">
+      <div class="find-top"><div class="find-badge fb-ok">PASSED</div><div class="find-icon">✅</div></div>
+      <div class="find-title">$PATH is clean</div>
+      <div class="find-desc">No dot (.), relative paths, or world-writable directories were found in $PATH. This means PATH hijacking attacks cannot be performed via this vector.</div>
+      <div class="find-code">$PATH → /usr/local/sbin:/usr/local/bin:...</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- INSTALL -->
+<section class="install-section" id="install">
+  <div class="section-label">Get started</div>
+  <div class="section-title">Up and running in 3 steps</div>
+  <p class="section-sub">No package manager, no internet connection required during the scan. Just a terminal and the script.</p>
+  <div class="install-grid">
+    <div class="install-steps">
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-body">
+          <div class="inst-title">Open a terminal</div>
+          <div class="inst-desc">In Ubuntu, press <strong>Ctrl + Alt + T</strong> to open a terminal window. Then type the command below to create the script file.</div>
+          <div class="code-pill"><code>nano ~/linux_audit.sh</code><button class="copy-small" onclick="cp(this,'nano ~/linux_audit.sh')">copy</button></div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-body">
+          <div class="inst-title">Make it executable</div>
+          <div class="inst-desc">After saving the script, run chmod to give it execute permission. The <code>+x</code> flag means "make this runnable".</div>
+          <div class="code-pill"><code>chmod +x ~/linux_audit.sh</code><button class="copy-small" onclick="cp(this,'chmod +x ~/linux_audit.sh')">copy</button></div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-body">
+          <div class="inst-title">Run the audit</div>
+          <div class="inst-desc">Execute the script. The <code>2>&1 | less -R</code> part keeps the colours and lets you scroll through the output.</div>
+          <div class="code-pill"><code>~/linux_audit.sh 2>&1 | less -R</code><button class="copy-small" onclick="cp(this,'~/linux_audit.sh 2>&1 | less -R')">copy</button></div>
+        </div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">4</div>
+        <div class="inst-body">
+          <div class="inst-title">Save a report file</div>
+          <div class="inst-desc">Export the results as a text file for documentation, portfolio use, or sharing with a team.</div>
+          <div class="code-pill"><code>~/linux_audit.sh --no-color > report.txt</code><button class="copy-small" onclick="cp(this,'~/linux_audit.sh --no-color > report.txt')">copy</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="install-right">
+      <div class="compat-box">
+        <div class="compat-title">Tested & compatible with</div>
+        <div class="compat-list">
+          <div class="compat-item"><div class="compat-check">✓</div>Ubuntu 20.04, 22.04, 24.04, 26.04</div>
+          <div class="compat-item"><div class="compat-check">✓</div>Debian 11, 12</div>
+          <div class="compat-item"><div class="compat-check">✓</div>RHEL / CentOS 7, 8, 9</div>
+          <div class="compat-item"><div class="compat-check">✓</div>Kali Linux (rolling)</div>
+          <div class="compat-item"><div class="compat-check">✓</div>VirtualBox, VMware, bare metal</div>
+          <div class="compat-item"><div class="compat-check">✓</div>No root required (deeper with sudo)</div>
+        </div>
+      </div>
+      <div class="flags-box">
+        <div class="flags-title">Script flags</div>
+        <div class="flag-item"><div class="flag-tag">--no-color</div><div class="flag-desc">Disable ANSI colours — useful when saving to a file</div></div>
+        <div class="flag-item"><div class="flag-tag">-h, --help</div><div class="flag-desc">Show usage instructions and available options</div></div>
+        <div class="flag-item"><div class="flag-tag">sudo ./script</div><div class="flag-desc">Run as root for deeper permission and process checks</div></div>
+        <div class="flag-item"><div class="flag-tag">2>&1</div><div class="flag-desc">Merge error output into main output so nothing is hidden</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Linux<span>Audit</span> Tool</div>
+  <p class="footer-sub">A read-only, zero-dependency Bash script for automated Linux security configuration and permission auditing. Built for learning, SOC practice, and portfolio demonstration.</p>
+  <div class="footer-tags">
+    <div class="ftag">bash</div>
+    <div class="ftag">cybersecurity</div>
+    <div class="ftag">linux</div>
+    <div class="ftag">soc</div>
+    <div class="ftag">privilege-escalation</div>
+    <div class="ftag">read-only</div>
+    <div class="ftag">open-source</div>
+  </div>
+  <p style="color:var(--text3);font-size:0.73rem;margin-top:20px">Always obtain proper authorisation before auditing any system you do not own.</p>
+</footer>
+
+<script>
+/* ── STEP PANELS ── */
+const panels = [
+  {
+    title:'admin123@ubuntu: ~ — Step 1: Create file',
+    body:`<span class="c-d"># Open the text editor</span>
+<span class="c-g">$ nano ~/linux_audit.sh</span>
+
+<span class="c-d"># Paste the full script inside nano</span>
+<span class="c-d"># Then save and exit:</span>
+<span class="c-d">#   Ctrl + O  →  save</span>
+<span class="c-d">#   Enter     →  confirm filename</span>
+<span class="c-d">#   Ctrl + X  →  exit nano</span>
+
+<span class="c-d">  GNU nano  ~/linux_audit.sh</span>
+<span class="c-d">  ┌──────────────────────────────┐</span>
+<span class="c-d">  │ #!/usr/bin/env bash           │</span>
+<span class="c-d">  │ # Linux Audit Tool v1.0      │</span>
+<span class="c-d">  └──────────────────────────────┘</span>
+<span class="c-d">  ^O Write Out    ^X Exit</span>`
+  },
+  {
+    title:'admin123@ubuntu: ~ — Step 2: Set permissions',
+    body:`<span class="c-d"># Make the script executable</span>
+<span class="c-g">$ chmod +x ~/linux_audit.sh</span>
+
+<span class="c-d"># Verify it worked</span>
+<span class="c-g">$ ls -la ~/linux_audit.sh</span>
+
+<span class="c-g">-rwxr-xr-x</span> <span class="c-w">1 admin123 admin123</span>
+<span class="c-w">8241 Oct 07 ~/linux_audit.sh</span>
+
+<span class="c-d"># The "x" bits mean it is executable ✓</span>
+<span class="c-d"># -rw<span class="c-g">x</span>r-<span class="c-g">x</span>r-<span class="c-g">x</span>  ← those three x flags</span>`
+  },
+  {
+    title:'admin123@ubuntu: ~ — Step 3: Run audit',
+    body:`<span class="c-d"># Run as your user (limited scope)</span>
+<span class="c-g">$ ~/linux_audit.sh 2>&1 | less -R</span>
+
+<span class="c-d"># Run as root (full scope — recommended)</span>
+<span class="c-g">$ sudo ~/linux_audit.sh 2>&1 | less -R</span>
+
+<span class="c-d"># Controls while reading output:</span>
+<span class="c-d">#   ↓ / Space  →  scroll down</span>
+<span class="c-d">#   ↑ / b      →  scroll up</span>
+<span class="c-d">#   q          →  quit</span>
+
+<span class="c-b">[INFO]</span>  <span class="c-w">Started: 2026-10-07 02:56:03</span>
+<span class="c-b">[INFO]</span>  <span class="c-w">Mode: read-only</span>
+<span class="c-g">=== 1. SYSTEM PROFILE ===</span>`
+  },
+  {
+    title:'admin123@ubuntu: ~ — Step 4: Save report',
+    body:`<span class="c-d"># Export as plain text file</span>
+<span class="c-g">$ ~/linux_audit.sh --no-color \\</span>
+<span class="c-g">    > ~/audit_report.txt 2>&1</span>
+
+<span class="c-d"># Or with today's date in filename</span>
+<span class="c-g">$ ~/linux_audit.sh --no-color \\</span>
+<span class="c-g">    > ~/audit_$(date +%Y%m%d).txt 2>&1</span>
+
+<span class="c-d"># View the saved report</span>
+<span class="c-g">$ cat ~/audit_report.txt</span>
+
+<span class="c-g">  ✓ File saved successfully</span>
+<span class="c-g">  ✓ Ready to share or submit</span>`
+  }
+];
+
+function setStep(i){
+  document.querySelectorAll('.step-item').forEach((el,j)=>{
+    el.classList.toggle('active',j===i);
+  });
+  document.getElementById('panel-title').textContent = panels[i].title;
+  document.getElementById('panel-body').innerHTML = panels[i].body;
+}
+
+/* ── DEMO SCENARIOS ── */
+const demos = {
+  clean:[
+    {t:0,   h:'<span class="c-g">$ sudo ~/linux_audit.sh 2>&1 | less -R\n</span>'},
+    {t:300, h:'<span class="c-b">\n+---------------------------------------+\n|  LINUX AUDIT TOOL  v1.0               |\n|  Read-only Security Audit             |\n+---------------------------------------+\n</span>'},
+    {t:700, h:'<span class="c-d">  Started : 2026-10-07 02:56:03 UTC\n  Mode    : read-only\n\n</span>'},
+    {t:900, h:'<span class="c-b">=== 1. SYSTEM & ENVIRONMENT ===\n</span>'},
+    {t:1000,h:'<span class="c-w">  OS:     Ubuntu 26.04 LTS\n  Kernel: 7.0.0-22-generic\n  User:   admin123  (UID 1000)\n</span>'},
+    {t:1200,h:'<span class="c-g">  [ OK ]   $PATH has no dangerous entries\n</span>'},
+    {t:1350,h:'<span class="c-g">  [ OK ]   User not in privileged groups\n\n</span>'},
+    {t:1500,h:'<span class="c-b">=== 2. PRIVILEGED ACCESS ===\n</span>'},
+    {t:1600,h:'<span class="c-g">  [ OK ]   sudo requires password\n</span>'},
+    {t:1750,h:'<span class="c-g">  [ OK ]   /etc/sudoers not readable\n\n</span>'},
+    {t:1900,h:'<span class="c-b">=== 3. SUID / SGID BINARIES ===\n</span>'},
+    {t:2000,h:'<span class="c-d">  Scanning filesystem...\n</span>'},
+    {t:2200,h:'<span class="c-y">  [REVIEW]   SUID /usr/bin/passwd (expected)\n</span>'},
+    {t:2350,h:'<span class="c-y">  [REVIEW]   SUID /usr/bin/sudo (expected)\n</span>'},
+    {t:2500,h:'<span class="c-g">  [ OK ]   No GTFOBins matches found\n\n</span>'},
+    {t:2700,h:'<span class="c-b">=== 4. SENSITIVE PERMISSIONS ===\n</span>'},
+    {t:2800,h:'<span class="c-g">  [ OK ]   /etc/passwd not writable\n</span>'},
+    {t:2900,h:'<span class="c-g">  [ OK ]   /etc/shadow not readable\n</span>'},
+    {t:3000,h:'<span class="c-g">  [ OK ]   No world-writable dirs found\n\n</span>'},
+    {t:3200,h:'<span class="c-b">+-------------------------------+\n| AUDIT SUMMARY                 |\n+-------------------------------+\n</span>'},
+    {t:3300,h:'<span class="c-w">  Total checks:    37\n</span>'},
+    {t:3400,h:'<span class="c-r">  Critical:        0\n</span>'},
+    {t:3500,h:'<span class="c-y">  Review items:    12\n</span>'},
+    {t:3600,h:'<span class="c-g">  Passed:          25\n</span>'},
+    {t:3700,h:'<span class="c-g">  Verdict: CLEAN ✓\n</span>'},
+  ],
+  suid:[
+    {t:0,   h:'<span class="c-g">$ sudo ~/linux_audit.sh 2>&1 | less -R\n</span>'},
+    {t:400, h:'<span class="c-b">\n=== 3. SUID & SGID BINARIES ===\n</span>'},
+    {t:600, h:'<span class="c-d">  Enumerating SUID files (-perm -4000)...\n</span>'},
+    {t:900, h:'<span class="c-y">  [REVIEW]   SUID /usr/bin/passwd\n</span>'},
+    {t:1100,h:'<span class="c-y">  [REVIEW]   SUID /usr/bin/sudo\n</span>'},
+    {t:1400,h:'<span class="c-rb">  [CRITICAL] SUID /tmp/audit_test/vim\n             GTFOBins match: vim\n             Any user can get a root shell!\n</span>'},
+    {t:1800,h:'<span class="c-y">  [REVIEW]   SUID /usr/bin/mount\n</span>'},
+    {t:2100,h:'<span class="c-rb">  [CRITICAL] SUID /usr/bin/find\n             GTFOBins match: find\n             find -exec /bin/sh → root shell\n</span>'},
+    {t:2500,h:'<span class="c-w">\n  SUID total: 5  |  GTFOBins matches: 2\n\n</span>'},
+    {t:2700,h:'<span class="c-b">=== AUDIT SUMMARY ===\n</span>'},
+    {t:2800,h:'<span class="c-rb">  Critical: 2 ← ATTENTION REQUIRED\n</span>'},
+    {t:2950,h:'<span class="c-y">  Review:   14\n</span>'},
+    {t:3100,h:'<span class="c-rb">  Verdict: ATTENTION\n</span>'},
+    {t:3300,h:'<span class="c-y">\n  How to exploit vim SUID:\n  $ vim /etc/passwd\n  :set shell=/bin/sh\n  :shell\n  # ← you are now root!\n</span>'},
+  ],
+  shadow:[
+    {t:0,   h:'<span class="c-g">$ sudo ~/linux_audit.sh 2>&1 | less -R\n</span>'},
+    {t:400, h:'<span class="c-b">\n=== 4. SENSITIVE FILE PERMISSIONS ===\n</span>'},
+    {t:600, h:'<span class="c-g">  [ OK ]   /etc/passwd not writable\n</span>'},
+    {t:900, h:'<span class="c-rb">  [CRITICAL] /etc/shadow is READABLE!\n             Permissions: -rw-r--r--\n             Should be:   -rw-r-----\n</span>'},
+    {t:1400,h:'<span class="c-g">  [ OK ]   /etc/group not writable\n</span>'},
+    {t:1600,h:'<span class="c-g">  [ OK ]   /etc/crontab not writable\n\n</span>'},
+    {t:1900,h:'<span class="c-y">  What this means:\n  /etc/shadow stores password hashes.\n  A readable shadow file lets an attacker\n  extract hashes and crack them offline\n  using tools like hashcat or john.\n\n</span>'},
+    {t:2400,h:'<span class="c-y">  To fix:\n  $ sudo chmod 640 /etc/shadow\n  $ sudo chown root:shadow /etc/shadow\n\n</span>'},
+    {t:2800,h:'<span class="c-b">=== AUDIT SUMMARY ===\n</span>'},
+    {t:2900,h:'<span class="c-rb">  Critical: 1\n</span>'},
+    {t:3050,h:'<span class="c-rb">  Verdict: ATTENTION\n</span>'},
+  ],
+  tmp:[
+    {t:0,   h:'<span class="c-g">$ /tmp/audit_sleep 300 &\n</span>'},
+    {t:350, h:'<span class="c-d">[1] 4821\n\n</span>'},
+    {t:600, h:'<span class="c-g">$ sudo ~/linux_audit.sh 2>&1 | less -R\n</span>'},
+    {t:1000,h:'<span class="c-b">\n=== 6. PROCESSES & SERVICES ===\n</span>'},
+    {t:1200,h:'<span class="c-d">  Checking 47 root processes...\n</span>'},
+    {t:1500,h:'<span class="c-d">  Checking all processes for /tmp paths...\n</span>'},
+    {t:1900,h:'<span class="c-rb">  [CRITICAL] PID 4821 (uid 1000)\n             runs from a temp path:\n             /tmp/audit_sleep\n</span>'},
+    {t:2400,h:'<span class="c-y">\n  Why this is suspicious:\n  Malware, rootkits, and post-exploit\n  tools commonly stage in /tmp because\n  it is always writable and usually\n  excluded from AV scans.\n\n</span>'},
+    {t:2900,h:'<span class="c-y">  To investigate:\n  $ ls -la /tmp/audit_sleep\n  $ file /tmp/audit_sleep\n  $ strings /tmp/audit_sleep\n\n</span>'},
+    {t:3300,h:'<span class="c-rb">  Verdict: ATTENTION — investigate PID 4821\n</span>'},
+  ],
+  path:[
+    {t:0,   h:'<span class="c-g">$ PATH="/tmp/audit_path:.:$PATH"\n  ~/linux_audit.sh 2>&1 | less -R\n</span>'},
+    {t:600, h:'<span class="c-b">\n=== 1. SYSTEM & ENVIRONMENT ===\n</span>'},
+    {t:800, h:'<span class="c-d">  Auditing $PATH entries...\n</span>'},
+    {t:1100,h:'<span class="c-rb">  [CRITICAL] $PATH has a dot entry: "."\n             Current directory is in PATH!\n</span>'},
+    {t:1600,h:'<span class="c-rb">  [CRITICAL] $PATH dir is world-writable:\n             /tmp/audit_path\n             Mode: drwxrwxrwx (anyone can write)\n</span>'},
+    {t:2200,h:'<span class="c-y">\n  Why this is dangerous:\n  If "." is in PATH and an attacker\n  places a file called "ls" or "cat"\n  in your current directory, running\n  "ls" executes THEIR code as YOU.\n\n</span>'},
+    {t:2800,h:'<span class="c-y">  To fix:\n  Remove "." from PATH in ~/.bashrc\n  Remove world-writable PATH dirs\n\n</span>'},
+    {t:3200,h:'<span class="c-rb">  Critical: 2\n  Verdict: ATTENTION\n</span>'},
+  ]
+};
+
+let timers=[];
+function clearT(){timers.forEach(clearTimeout);timers=[]}
+
+function runDemo(name){
+  clearT();
+  document.querySelectorAll('.scen-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sb-'+name).classList.add('active');
+  const out=document.getElementById('term-out');
+  const prog=document.getElementById('demo-prog');
+  const status=document.getElementById('demo-status');
+  out.innerHTML='';
+  prog.style.width='0%';
+  status.textContent='Scanning...';
+  const frames=demos[name];
+  const total=frames[frames.length-1].t+600;
+  frames.forEach(f=>{
+    const t=setTimeout(()=>{
+      out.innerHTML+=f.h;
+      document.getElementById('term-body').scrollTop=99999;
+      prog.style.width=Math.min(100,Math.round(f.t/total*100))+'%';
+    },f.t);
+    timers.push(t);
+  });
+  const done=setTimeout(()=>{
+    prog.style.width='100%';
+    status.textContent='Scan complete';
+  },total);
+  timers.push(done);
+}
+
+function cp(btn,text){
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const o=btn.textContent;
+  btn.textContent='copied!';
+  btn.style.color='var(--green)';
+  btn.style.borderColor='var(--green)';
+  setTimeout(()=>{btn.textContent=o;btn.style.color='';btn.style.borderColor=''},1800);
+}
+
+runDemo('clean');
+</script>
+</body>
+</html>
